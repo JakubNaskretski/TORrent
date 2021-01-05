@@ -1,9 +1,6 @@
 package com.tracker;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -12,6 +9,8 @@ public class Tracker {
 
     private ServerSocket serverSocket;
     private ArrayList hostsList;
+    private BufferedReader reader;
+    private String receivedData;
 
     public Tracker(int port) {
         try {
@@ -23,36 +22,30 @@ public class Tracker {
 
             client.getOutputStream().write("Connection established\r\n".getBytes());
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
+//            DataInputStream dIn = new DataInputStream((client.getInputStream()));
 
-            System.out.println(reader.readLine());
+            reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "UTF8"));
 
-            try {
-//          Gets data from Client about itself
-                int clientHashCode = Integer.getInteger(reader.readLine());
-                String clientName = reader.readLine();
-                String clientIp = reader.readLine();
-                int clientPort = Integer.getInteger(reader.readLine());
+            receivedData = new String();
 
-                HostModel hostModel = new HostModel(clientName, clientIp, clientPort, clientHashCode);
+            System.out.println(reader.read());
 
-
-                if (!hostsList.contains(hostModel)) {
-                    hostsList.add(hostModel);
-                } else {
-                    System.out.println("Host już jest na liście");
-                }
-            } catch (NullPointerException e) {
-                System.out.println("Didnt get data");
-            }
-
-//            client.getOutputStream().write(hostsList.get(0).toString().getBytes());
-
-            client.getOutputStream().write("test".getBytes());
-
+//            StringBuffer strB = new StringBuffer(receivedData);
+//            strB.append(reader.readLine());
+//
+//            receivedData = strB.toString();
 
             reader.close();
-//            serverSocket.close();
+
+            System.out.println(receivedData);
+
+
+//                int clientHashCode = Integer.getInteger(reader.readLine());
+//                String clientName = reader.readLine();
+//                String clientIp = reader.readLine();
+//                int clientPort = Integer.getInteger(reader.readLine());
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }

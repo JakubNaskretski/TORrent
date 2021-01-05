@@ -10,13 +10,17 @@ public class Client {
 
 
     private Socket socket;
-    private PrintWriter writer;
+    private OutputStream outputStream;
+    private BufferedWriter out;
     private BufferedReader reader;
 
     public Client(String hostname, int port) {
         try {
             socket = new Socket(hostname, port);
-            writer = new PrintWriter(socket.getOutputStream(),true);
+
+            outputStream = socket.getOutputStream();
+            out= new BufferedWriter(new OutputStreamWriter(outputStream, "UTF8"));
+//                    new FileOutputStream(fileDir), "UTF8"));
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             System.out.println("Nawiązano połączenie!");
         } catch (IOException e) {
@@ -28,17 +32,34 @@ public class Client {
     private void talk(){
 
         try {
-            writer.println(socket.hashCode());
-            writer.println("Example name");
-            writer.println("Example ip");
-            writer.println(socket.getPort());
+            out.append("First test text\n");
+            out.flush();
+            // Send first message
+//            dOut.writeByte(1);
+//            dOut.writeUTF(String.valueOf(socket.hashCode()));
+//            dOut.flush(); // Send off the data
+//
+//// Send the second message
+//            dOut.writeByte(2);
+//            dOut.writeUTF("Example name");
+//            dOut.flush(); // Send off the data
+//
+//// Send the third message
+//            dOut.writeByte(3);
+//            dOut.writeUTF("Example ip");
+////            dOut.writeUTF("This is the third type of message (Part 2).");
+//            dOut.flush(); // Send off the data
+//
+//// Send the fourth message
+//            dOut.writeByte(4);
+//            dOut.writeUTF(String.valueOf(socket.getPort()));
+//            dOut.flush(); // Send off the data
+//
+//// Send the exit message
+//            dOut.writeByte(-1);
+//            dOut.flush();
 
-            String line;
-            while( (line = reader.readLine() ) != null ){
-                System.out.println(line);
-            }
-
-            writer.close();
+            out.close();
             reader.close();
             socket.close();
 
