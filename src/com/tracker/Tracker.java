@@ -25,24 +25,20 @@ public class Tracker {
             serverSocket = new ServerSocket(port);
             Socket client = serverSocket.accept();
 
-//            client.getOutputStream().write("Connection established\r\n".getBytes());
-//            DataInputStream dIn = new DataInputStream((client.getInputStream()));
-
             writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"));
-
             reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "UTF8"));
 
             receivedData = new String();
 
             StringBuffer strB = new StringBuffer(receivedData);
 
-            String currentLine;
-
+//            String currentLine;
 //            while ((currentLine = reader.readLine())!= null) {
 //                strB.append(currentLine);
 //                strB.append("\n");
 //            }
 
+//            Reads data about Client
             strB.append(reader.readLine());
             strB.append("\n");
             strB.append(reader.readLine());
@@ -59,10 +55,8 @@ public class Tracker {
                 writer.append("-");
                 writer.append(String.valueOf(element.getSeederPort()));
                 writer.append("\n");
-
             }
             writer.flush();
-
             writer.close();
 
 
@@ -92,17 +86,6 @@ public class Tracker {
             for (String element : receivedDataList) {
                 System.out.println(element);
             }
-
-
-//            reader.close();
-
-//            System.out.println(receivedData);
-
-
-//                int clientHashCode = Integer.getInteger(reader.readLine());
-//                String clientName = reader.readLine();
-//                String clientIp = reader.readLine();
-//                int clientPort = Integer.getInteger(reader.readLine());
 
 
         } catch (IOException e) {
