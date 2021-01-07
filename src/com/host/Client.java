@@ -2,16 +2,14 @@ package com.host;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Client {
 
 //    TODO: If no host currently online inform about no seeders
 
 
+    private ArrayList<File> filesList;
 
     private Socket socket;
     private OutputStream outputStream;
@@ -35,10 +33,10 @@ public class Client {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        talk();
+        getSeedersList();
     }
 
-    private void talk(){
+    private void getSeedersList(){
 
         try {
             out.append(socket.hashCode()+"\n");
@@ -104,6 +102,82 @@ public class Client {
 
     }
 
+    public void downloadFileFromHost() {
+
+        
+
+    }
+
+
+    public ArrayList<File> loadFilesToShare(){
+        return null;
+    }
+
+    public void askSeedersForFilesList(HashMap<String, Integer> seedersMap) {
+        for (Map.Entry<String, Integer> entry : seedersMap.entrySet()) {
+            System.out.println("Key = " + entry.getKey() +
+                    ", Value = " + entry.getValue());
+
+
+
+        }
+    }
+
+    public ArrayList<File> askSeederForFile(){
+
+        try {
+            out.append(socket.hashCode()+"\n");
+            out.append("Example name\n");
+            out.append("Example ip\n");
+            out.append(socket.getPort()+"\n");
+            out.flush();
+
+//            out.close();
+
+
+//            Read list of seeders
+            receivedData = new String();
+
+            StringBuffer strB = new StringBuffer(receivedData);
+
+            String currentLine;
+
+//            strB.append(in.readLine());
+
+            while ((currentLine = in.readLine())!= null) {
+                strB.append(currentLine);
+                strB.append("\n");
+            }
+
+            receivedData = strB.toString();
+
+//            Splits input to a list
+            List<String> receivedSeedersList = splitReceivedSeedersData(receivedData);
+
+            for (String element : receivedSeedersList) {
+
+                List<String> tmp = splitSeedersListByIpPort(element);
+
+                seedersMap.put(tmp.get(0), Integer.valueOf(tmp.get(1)));
+
+            }
+
+            // using for-each loop for iteration over Map.entrySet()
+            for (Map.Entry<String, Integer> entry : seedersMap.entrySet())
+                System.out.println("Key = " + entry.getKey() +
+                        ", Value = " + entry.getValue());
+
+//        out.close();
+//            in.close();
+            socket.close();
+
+        } catch (IOException e) {
+
+            e.printStackTrace();
+        }
+
+        return null;
+    }
 
     public static void main(String[] args) {
         new Client("0.0.0.0", 44445);
