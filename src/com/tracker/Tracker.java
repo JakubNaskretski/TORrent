@@ -21,17 +21,16 @@ public class Tracker {
             seedersList.add(new SeederModel(0, "111.1111.111", 234, 2342));
             serverSocket = new ServerSocket(port);
 
-            // running infinite loop for getting
-            // client request
+//          Run infinite loop for getting client request
             while (true) {
 
+//              Accept socket
                 Socket client = serverSocket.accept();
 
-                // create a new thread object
+//              Create a new thread object
                 ClientHandler clientSocket = new ClientHandler(client);
 
-                // This thread will handle the client
-                // separately
+//              Thread to handle request
                 new Thread(clientSocket).start();
             }
         }
@@ -51,7 +50,7 @@ public class Tracker {
     }
 
 
-    // ClientHandler class
+//  ClientHandler class
     private static class ClientHandler implements Runnable {
         private final Socket client;
         private String receivedData;
@@ -74,13 +73,7 @@ public class Tracker {
 
                 StringBuffer strB = new StringBuffer(receivedData);
 
-                //            String currentLine;
-                //            while ((currentLine = reader.readLine())!= null) {
-                //                strB.append(currentLine);
-                //                strB.append("\n");
-                //            }
-
-                //          Read data about Client
+//              Read lines of data about the connecting client from client
                 strB.append(reader.readLine());
                 strB.append("\n");
                 strB.append(reader.readLine());
@@ -91,7 +84,7 @@ public class Tracker {
                 strB.append("\n");
 
 
-                //          Retrieves list of seeders (before appending new one to the list)
+//              Retrieves list of seeders (before appending new one to the list)
                 for (SeederModel element : seedersList) {
                     writer.append(String.valueOf(element.getSeederAppNumber()));
                     writer.append("-");
@@ -108,30 +101,32 @@ public class Tracker {
 
                 receivedData = strB.toString();
 
-                //            Splits input to a list
+//            Splits input to a list
                 List<String> receivedDataList = splitReceivedWelcomeData(receivedData);
 
-                Integer lecherHashCode = Integer.getInteger(receivedDataList.get(0));
-                Integer lecherNumber = Integer.getInteger(receivedDataList.get(1));
-                String lecherIp = receivedDataList.get(2);
-                Integer lecherPort = Integer.getInteger(receivedDataList.get(3));
+                Integer clientHashCode = Integer.getInteger(receivedDataList.get(0));
+                Integer clientNumber = Integer.getInteger(receivedDataList.get(1));
+                String clientIp = receivedDataList.get(2);
+                Integer clientPort = Integer.getInteger(receivedDataList.get(3));
 
 
-                //          Checks if client is in list
+    //          Checks if client is in list with seeders
                 boolean containsHost = false;
 
                 synchronized (seedersList) {
 
                     for (SeederModel element : seedersList) {
-                        if (element.getSeederAppNumber() == lecherNumber && element.getSeederIp() == lecherIp) {
+                        if (element.getSeederAppNumber() == clientNumber && element.getSeederIp() == clientIp && element.getSeederPort() == clientPort) {
                             containsHost = true;
                         }
                     }
+//                  If not, add new object with client data to the list
                     if (containsHost) {
-                        seedersList.add(new SeederModel(lecherNumber, lecherIp, lecherPort, lecherHashCode));
-                    }
-                    for (String element : receivedDataList) {
-                        System.out.println(element);
+                        seedersList.add(new SeederModel(clientNumber, clientIp, clientPort, clientHashCode));
+//                      Prints out clients data if it is new
+                        for (String element : receivedDataList) {
+                            System.out.println(element);
+                        }
                     }
                 }
 
@@ -152,7 +147,7 @@ public class Tracker {
             }
         }
 
-
+//          Method to split received data to lsit by new lines
             public List<String> splitReceivedWelcomeData(String welcomeData){
             return Arrays.asList(welcomeData.split("\\s*\\n\\s*"));
         }
