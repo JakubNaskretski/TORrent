@@ -10,14 +10,13 @@ import java.util.List;
 public class Tracker {
 
     private ServerSocket serverSocket;
-    private static ArrayList<SeederModel> seedersList;
+    private ArrayList<SeederModel> seedersList = new ArrayList();
     private BufferedReader reader;
     private BufferedWriter writer;
     private String receivedData;
 
     public Tracker(int port) {
         try {
-            seedersList = new ArrayList();
             seedersList.add(new SeederModel(0, "111.1111.111", 234, 2342));
             serverSocket = new ServerSocket(port);
 
@@ -51,7 +50,7 @@ public class Tracker {
 
 
 //  ClientHandler class
-    private static class ClientHandler implements Runnable {
+    private  class ClientHandler implements Runnable {
         private final Socket client;
         private String receivedData;
 
@@ -104,10 +103,10 @@ public class Tracker {
 //            Splits input to a list
                 List<String> receivedDataList = splitReceivedWelcomeData(receivedData);
 
-                Integer clientHashCode = Integer.getInteger(receivedDataList.get(0));
-                Integer clientNumber = Integer.getInteger(receivedDataList.get(1));
-                String clientIp = receivedDataList.get(2);
-                Integer clientPort = Integer.getInteger(receivedDataList.get(3));
+                Integer clientNumber = Integer.parseInt(receivedDataList.get(0));
+                String clientIp = receivedDataList.get(1);
+                Integer clientPort = Integer.parseInt(receivedDataList.get(2));
+                Integer clientHashCode = Integer.parseInt(receivedDataList.get(3));
 
 
     //          Checks if client is in list with seeders
@@ -121,7 +120,7 @@ public class Tracker {
                         }
                     }
 //                  If not, add new object with client data to the list
-                    if (containsHost) {
+                    if (!containsHost) {
                         seedersList.add(new SeederModel(clientNumber, clientIp, clientPort, clientHashCode));
 //                      Prints out clients data if it is new
                         for (String element : receivedDataList) {
@@ -153,6 +152,9 @@ public class Tracker {
         }
     }
 
+    public ArrayList<SeederModel> getSeedersList() {
+        return seedersList;
+    }
 
     public static void main(String[] args) {
         new Tracker(10000);
