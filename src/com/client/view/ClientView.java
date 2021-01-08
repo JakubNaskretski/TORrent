@@ -272,4 +272,7 @@ public class ClientView {
     public ArrayList<JPanel> getFilesList() {
         return filesList;
     }
+
+
+
 }

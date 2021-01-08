@@ -20,7 +20,7 @@ public class Tracker {
 
             seedersList = new ArrayList();
 
-            seedersList.add(new SeederModel("test name", "111.1111.111", 234, 2342));
+            seedersList.add(new SeederModel(0, "111.1111.111", 234, 2342));
 
             serverSocket = new ServerSocket(port);
             Socket client = serverSocket.accept();
@@ -38,7 +38,7 @@ public class Tracker {
 //                strB.append("\n");
 //            }
 
-//            Reads data about Client
+//          Read data about Client
             strB.append(reader.readLine());
             strB.append("\n");
             strB.append(reader.readLine());
@@ -51,9 +51,13 @@ public class Tracker {
 
 //          Retrieves list of seeders (before appending new one to the list)
             for (SeederModel element : seedersList) {
-                writer.append(element.getSeederIp());
+                writer.append(String.valueOf(element.getSeederAppNumber()));
+                writer.append("-");
+                writer.append(String.valueOf(element.getSeederIp()));
                 writer.append("-");
                 writer.append(String.valueOf(element.getSeederPort()));
+                writer.append("-");
+                writer.append(String.valueOf(element.getSeederHash()));
                 writer.append("\n");
             }
             writer.flush();
@@ -66,41 +70,39 @@ public class Tracker {
             List<String> receivedDataList = splitReceivedWelcomeData(receivedData);
 
             Integer lecherHashCode = Integer.getInteger(receivedDataList.get(0));
-            String lecherName = receivedDataList.get(1);
+            Integer lecherNumber = Integer.getInteger(receivedDataList.get(1));
             String lecherIp = receivedDataList.get(2);
             Integer lecherPort = Integer.getInteger(receivedDataList.get(3));
 
 
-//            Checks if client is in list
+//          Checks if client is in list
             boolean containsHost = false;
             for (SeederModel element : seedersList) {
-                if (element.getSeederName() == lecherName && element.getSeederIp() == lecherIp) {
+                if (element.getSeederAppNumber() == lecherNumber && element.getSeederIp() == lecherIp) {
                     containsHost = true;
                 }
             }
-
             if (containsHost) {
-                seedersList.add(new SeederModel(lecherName, lecherIp, lecherPort, lecherHashCode));
+                seedersList.add(new SeederModel(lecherNumber, lecherIp, lecherPort, lecherHashCode));
             }
-
             for (String element : receivedDataList) {
                 System.out.println(element);
             }
-
-
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public List<String> splitReceivedWelcomeData(String welcomeData){
-
         return Arrays.asList(welcomeData.split("\\s*\\n\\s*"));
-
     }
 
 
     public static void main(String[] args) {
-        new Tracker(44445);
+
+
+        new Tracker(10000);
+
+        
     }
 }

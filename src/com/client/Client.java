@@ -1,8 +1,9 @@
 package com.client;
 
-import com.client.view.ClientView;
+import com.tracker.SeederModel;
 
 import java.io.*;
+import java.net.ConnectException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
@@ -34,6 +35,7 @@ public class Client {
     private String hostingIp = "0.0.0.0";
 
 //  Tracker ip
+//    TODO: Change for correct data
     private String trackerIp = "0.0.0.0";
 
 //  Tracker port number
@@ -45,13 +47,16 @@ public class Client {
 //  File to send name
     private String fileToSendName;
 
+//  Verify if connection with tracker was successful
+    private boolean connectedToTracker = false;
+
     private Socket socket;
     private OutputStream outputStream;
     private InputStream inputStream;
     private BufferedWriter out;
     private BufferedReader in;
     private String receivedData, dirToSaveFile;
-    private HashMap<String, Integer> seedersMap;
+    private ArrayList<SeederModel> seedersArray;
     private boolean stop;
     private int receiverPort;
 
@@ -64,7 +69,7 @@ public class Client {
         this.hostingFilesFolder = "D:\\\\TORrent_"+applicationNumber+"\\";
 
 //      Creates HashMap for storing seeders list
-        seedersMap = new HashMap<>();
+        seedersArray = new ArrayList<SeederModel>();
 
 //      Tries to connect with the tracker in order to get information about seeders
         connectWithTracker();
@@ -73,7 +78,7 @@ public class Client {
 
     public void connectWithTracker() {
         try {
-//            Creates socket
+//          Creates socket to connect with tracker
             socket = new Socket(trackerIp, trackerPort);
 
 //          Creates output stream buffer for writing data to tracker
@@ -85,7 +90,14 @@ public class Client {
             in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
 
 //          Prints out information if successfully connected with tracker
-            System.out.println("Connection established!");
+            System.out.println("Connection established");
+
+//          Set up connection flag
+            connectedToTracker = true;
+
+        } catch (ConnectException e) {
+            System.out.println("Could not connect to the Tracker");
+            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -96,49 +108,61 @@ public class Client {
 
     private void getSeedersList(){
 
-        try {
+        if (connectedToTracker) {
+            try {
 //          Send information about itself in order to add new seeder to the list
-            out.append(socket.hashCode()+"\n");
-            out.append("Example name\n");
-            out.append("Example ip\n");
-            out.append(socket.getPort()+"\n");
-            out.flush();
+                out.append(applicationNumber + "\n");
+                out.append(hostingIp + "\n");
+                out.append(hostingPort + "\n");
+                out.append(hashCode() + "\n");
+                out.flush();
 
 //          Read list of seeders
-            receivedData = new String();
-            StringBuffer strB = new StringBuffer(receivedData);
-            String currentLine;
+                receivedData = new String();
+                StringBuffer strB = new StringBuffer(receivedData);
+                String currentLine;
 
 //          While output stream on tracker open and sending data, read data
-            while ((currentLine = in.readLine())!= null) {
-                strB.append(currentLine);
-                strB.append("\n");
-            }
+                while ((currentLine = in.readLine()) != null) {
+                    strB.append(currentLine);
+                    strB.append("\n");
+                }
 
-            receivedData = strB.toString();
+                receivedData = strB.toString();
 
-//          Splits input to a list
-            List<String> receivedSeedersList = splitReceivedSeedersData(receivedData);
+//          Splits received seeders data into a list
+                List<String> receivedSeedersList = splitReceivedSeedersData(receivedData);
 
-//          For elements in list, split list and add seeders information into the hash map
-            for (String element : receivedSeedersList) {
-                List<String> tmp = splitSeedersListByIpPort(element);
-                seedersMap.put(tmp.get(0), Integer.valueOf(tmp.get(1)));
+//          For elements in list, split list and add seeders information into the list of SeederModels
+                for (String element : receivedSeedersList) {
+//              Creates tmp list containing base elements of SeederModel
+                    List<String> tmp = splitSeedersListByIpPort(element);
 
-            }
+//              Writes SeederModel base elements into the tmp variables
+                    Integer tmpAppNo = Integer.valueOf(tmp.get(0));
+                    String tmpHostIp = tmp.get(1);
+                    Integer tmpHostPort = Integer.valueOf(tmp.get(2));
+                    Integer tmpHostHash = Integer.valueOf(tmp.get(3));
 
-//          Print out content of the hash map - control
-            for (Map.Entry<String, Integer> entry : seedersMap.entrySet())
-                System.out.println("Key = " + entry.getKey() +
-                        ", Value = " + entry.getValue());
+//              Creates SeederModel as a store of possible to connect seeders and places them into array
+                    seedersArray.add(new SeederModel(tmpAppNo, tmpHostIp, tmpHostPort, tmpHostHash));
+
+                }
+
+//          Print out content of the seeders array - control
+                for (SeederModel seederModel : seedersArray) {
+                    System.out.println(seederModel.toString());
+                }
 
 //          Closes streams and connection
-            out.close();
-            in.close();
-            socket.close();
-        } catch (IOException e) {
-
-            e.printStackTrace();
+                out.close();
+                in.close();
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("Cannot get seeders list without connection to tracker");
         }
     }
 
@@ -167,7 +191,7 @@ public class Client {
     public void seedFileAsHost(String fileToSendName) {
 //      Sets name of the file to send
         setFileToSendName(fileToSendName);
-//      Starts sending file method
+//      Starts sending file meth od
         sendFileThread.start();
     }
 
@@ -325,62 +349,61 @@ public class Client {
 
 
 //  Ask particular seeder for files list
-    public ArrayList<File> askSeederForFile(){
-
-        try {
-            out.append(socket.hashCode()+"\n");
-            out.append("Example name\n");
-            out.append("Example ip\n");
-            out.append(socket.getPort()+"\n");
-            out.flush();
-
-//            out.close();
-
-
-//            Read list of seeders
-            receivedData = new String();
-
-            StringBuffer strB = new StringBuffer(receivedData);
-
-            String currentLine;
-
-//            strB.append(in.readLine());
-
-            while ((currentLine = in.readLine())!= null) {
-                strB.append(currentLine);
-                strB.append("\n");
-            }
-
-            receivedData = strB.toString();
-
-//            Splits input to a list
-            List<String> receivedSeedersList = splitReceivedSeedersData(receivedData);
-
-            for (String element : receivedSeedersList) {
-
-                List<String> tmp = splitSeedersListByIpPort(element);
-
-                seedersMap.put(tmp.get(0), Integer.valueOf(tmp.get(1)));
-
-            }
-
-            // using for-each loop for iteration over Map.entrySet()
-            for (Map.Entry<String, Integer> entry : seedersMap.entrySet())
-                System.out.println("Key = " + entry.getKey() +
-                        ", Value = " + entry.getValue());
-
-//        out.close();
-//            in.close();
-            socket.close();
-
-        } catch (IOException e) {
-
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
+//    public ArrayList<File> askSeederForFile(){
+//
+//        try {
+//            out.append(socket.hashCode()+"\n");
+//            out.append("Example name\n");
+//            out.append("Example ip\n");
+//            out.append(socket.getPort()+"\n");
+//            out.flush();
+//
+////            out.close();
+//
+//
+////            Read list of seeders
+//            receivedData = new String();
+//
+//            StringBuffer strB = new StringBuffer(receivedData);
+//
+//            String currentLine;
+//
+////            strB.append(in.readLine());
+//
+//            while ((currentLine = in.readLine())!= null) {
+//                strB.append(currentLine);
+//                strB.append("\n");
+//            }
+//
+//            receivedData = strB.toString();
+//
+////            Splits input to a list
+//            List<String> receivedSeedersList = splitReceivedSeedersData(receivedData);
+//
+//            for (String element : receivedSeedersList) {
+//
+//                List<String> tmp = splitSeedersListByIpPort(element);
+//
+//                seedersArray.put(tmp.get(0), Integer.valueOf(tmp.get(1)));
+//
+//            }
+//
+//            // using for-each loop for iteration over Map.entrySet()
+//            for (Map.Entry<String, Integer> entry : seedersArray.entrySet())
+//                System.out.println("Key = " + entry.getKey() +
+//                        ", Value = " + entry.getValue());
+//
+////        out.close();
+////            in.close();
+//            socket.close();
+//
+//        } catch (IOException e) {
+//
+//            e.printStackTrace();
+//        }
+//
+//        return null;
+//    }
 
     public void setDirToSaveFile(String dirToSaveFile) {
         this.dirToSaveFile = dirToSaveFile;
@@ -390,7 +413,6 @@ public class Client {
         this.receiverPort = seederPort;
     }
 
-
     public void setFileSenderPort(int hostingPort) {
         this.hostingPort = hostingPort;
     }
@@ -398,6 +420,19 @@ public class Client {
     public void setFileToSendName(String fileToSendName) {
         this.fileToSendName = fileToSendName;
     }
+
+    public String getHostingIp() {
+        return hostingIp;
+    }
+
+    public String getHostingFilesFolder() {
+        return hostingFilesFolder;
+    }
+
+    public int getHostingPort() {
+        return hostingPort;
+    }
+
 
 }
 

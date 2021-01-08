@@ -6,23 +6,22 @@ import java.util.ArrayList;
 
 public class SeederModel {
 
-    private String seederName, seederIp;
-    private Integer seederHash;
-    private Integer seederPort;
+    private String seederIp;
+    private Integer seederHash, seederAppNumber, seederPort;
 
     private ArrayList filesList;
 
 
-    public SeederModel(String hostName, String hostIp, int hostPort, int hostHash) {
-        this.seederName = hostName;
+    public SeederModel(Integer hostAppNumber, String hostIp, int hostPort, int hostHash) {
+        this.seederAppNumber = hostAppNumber;
         this.seederIp = hostIp;
         this.seederPort = hostPort;
         this.seederHash = hostHash;
         filesList = new ArrayList<File>();
     }
 
-    public String getSeederName() {
-        return seederName;
+    public Integer getSeederAppNumber() {
+        return seederAppNumber;
     }
 
     public String getSeederIp() {
@@ -44,7 +43,7 @@ public class SeederModel {
     @Override
     public String toString() {
         return "HostModel{" +
-                "hostName='" + seederName + '\'' +
+                "hostName='" + seederAppNumber + '\'' +
                 ", hostIp='" + seederIp + '\'' +
                 ", hostHash=" + seederHash +
                 ", hostPort=" + seederPort +
