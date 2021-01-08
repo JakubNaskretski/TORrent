@@ -1,4 +1,4 @@
-package com.host;
+package com.client;
 
 public class File {
 

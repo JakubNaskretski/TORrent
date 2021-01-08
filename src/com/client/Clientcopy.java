@@ -1,13 +1,12 @@
-package com.host;
+package com.client;
 
+import java.io.File;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
-import java.io.File;
-import java.io.FileInputStream;
 
-public class Client {
+public class Clientcopy {
 
 //    TODO: If no host currently online inform about no seeders
 
@@ -26,7 +25,9 @@ public class Client {
 
     private String hostingFilePath, hostingFileName;
 
-    public Client(String hostname, int port) {
+    public Clientcopy(){};
+
+    public Clientcopy(String hostname, int port) {
         try {
             socket = new Socket(hostname, port);
             seedersMap = new HashMap<>();
@@ -325,7 +326,9 @@ public class Client {
     }
 
     public static void main(String[] args) {
-        new Client("0.0.0.0", 44445);
+//        new Client("0.0.0.0", 44445);
+        Clientcopy client = new Clientcopy();
+        client.downloadFileFromSeeder("", 44445);
     }
 }
 
