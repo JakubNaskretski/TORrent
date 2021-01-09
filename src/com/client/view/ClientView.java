@@ -165,14 +165,14 @@ public class ClientView {
         topInformationPanel.add(yourPortLabel, topC);
 
 
-        this.yourPortLabel = new JLabel("44445");
+        this.portLabel = new JLabel("44445");
 //        yourPortLabel.setFont(new Font("serif", Font.BOLD, 25));
         topC.fill = GridBagConstraints.HORIZONTAL;
 //        c.insets = new Insets(5, 15, 10, 15);
         topC.gridwidth = 1;
         topC.gridx = 3;
         topC.gridy = 0;
-        topInformationPanel.add(yourPortLabel, topC);
+        topInformationPanel.add(portLabel, topC);
 
 
 //      Setting information buttons for buttons panel

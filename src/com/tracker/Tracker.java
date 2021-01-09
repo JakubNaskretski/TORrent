@@ -109,18 +109,20 @@ public class Tracker {
                 Integer clientHashCode = Integer.parseInt(receivedDataList.get(3));
 
 
-    //          Checks if client is in list with seeders
+//              Checks if client is in list with seeders
                 boolean containsHost = false;
 
                 synchronized (seedersList) {
 
                     for (SeederModel element : seedersList) {
-                        if (element.getSeederAppNumber() == clientNumber && element.getSeederIp() == clientIp && element.getSeederPort() == clientPort) {
+                        if (element.getSeederAppNumber().equals(clientNumber) && element.getSeederIp().equals(clientIp) && element.getSeederPort().equals(clientPort)) {
                             containsHost = true;
+//                          If found in list no need to continue searching
+                            break;
                         }
                     }
 //                  If not, add new object with client data to the list
-                    if (!containsHost) {
+                    if (containsHost == false) {
                         seedersList.add(new SeederModel(clientNumber, clientIp, clientPort, clientHashCode));
 //                      Prints out clients data if it is new
                         for (String element : receivedDataList) {

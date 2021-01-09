@@ -144,12 +144,29 @@ public class Client {
                     Integer tmpHostPort = Integer.valueOf(tmp.get(2));
                     Integer tmpHostHash = Integer.valueOf(tmp.get(3));
 
-//              Creates SeederModel as a store of possible to connect seeders and places them into array
-                    seedersArray.add(new SeederModel(tmpAppNo, tmpHostIp, tmpHostPort, tmpHostHash));
+                    //              Checks if client is in list with seeders
+                    boolean containsHost = false;
 
+                    for (SeederModel seederModel : seedersArray) {
+                        if (seederModel.getSeederAppNumber().equals(tmpAppNo) && seederModel.getSeederIp().equals(tmpHostIp) && seederModel.getSeederPort().equals(tmpHostPort)) {
+                                containsHost = true;
+//                          If found in list no need to continue searching
+                                break;
+                        }
+                    }
+
+//                  If not, add new object with seeder data to the list
+                    if (containsHost == false) {
+//                      If element is not the same as current app
+                        if(!tmpAppNo.equals(Integer.valueOf(applicationNumber))) {
+//              Creates SeederModel as a store of possible to connect seeders and places them into array
+                            seedersArray.add(new SeederModel(tmpAppNo, tmpHostIp, tmpHostPort, tmpHostHash));
+                        }
+                    }
                 }
 
 //          Print out content of the seeders array - control
+                System.out.println("Printing from "+applicationNumber);
                 for (SeederModel seederModel : seedersArray) {
                     System.out.println(seederModel.toString());
                 }
@@ -430,7 +447,7 @@ public class Client {
     }
 
     public int getHostingPort() {
-        return hostingPort;
+        return this.hostingPort;
     }
 
 
