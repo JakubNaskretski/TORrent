@@ -3,13 +3,14 @@ package com.tracker;
 import com.client.File;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class SeederModel {
 
     private String seederIp;
     private Integer seederHash, seederAppNumber, seederPort;
 
-    private ArrayList filesList;
+    private HashMap<String, String> filesList;
 
 
     public SeederModel(Integer hostAppNumber, String hostIp, int hostPort, int hostHash) {
@@ -17,7 +18,7 @@ public class SeederModel {
         this.seederIp = hostIp;
         this.seederPort = hostPort;
         this.seederHash = hostHash;
-        filesList = new ArrayList<File>();
+        filesList = new HashMap<>();
     }
 
     public Integer getSeederAppNumber() {
@@ -36,7 +37,7 @@ public class SeederModel {
         return seederPort;
     }
 
-    public ArrayList getFilesList() {
+    public HashMap<String, String> getFilesMap() {
         return filesList;
     }
 

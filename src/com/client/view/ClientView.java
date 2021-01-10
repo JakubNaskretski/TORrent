@@ -15,7 +15,7 @@ public class ClientView {
     private Dimension mainFrameDimension,seederJPanelSize, fileJPanelSize;
     private int mainFrameWidth, mainFrameHeight;
 
-    private JLabel yourIpLabel, ipLabel, yourPortLabel, portLabel;
+    private JLabel appNumberLabel, yourAppNumberLabel, yourIpLabel, ipLabel, yourPortLabel, portLabel;
     private JButton sendFileButton, downloadFileButton;
 
     private ArrayList<JPanel> seedersList, filesList;
@@ -136,12 +136,32 @@ public class ClientView {
 
 
 //      Setting information labels for information panel
-        this.yourIpLabel = new JLabel("Your Ip: ");
-//        yourIpLabel.setFont(new Font("serif", Font.BOLD, 25));
+        this.yourAppNumberLabel = new JLabel("app no-");
+//        yourAppNumberLabel.setFont(new Font("serif", Font.BOLD, yourAppNumberLabel.getFont().getSize()));
         topC.fill = GridBagConstraints.HORIZONTAL;
 //        c.insets = new Insets(5, 15, 10, 15);
         topC.gridwidth = 1;
         topC.gridx = 0;
+        topC.gridy = 0;
+        topInformationPanel.add(yourAppNumberLabel, topC);
+
+//      Setting information labels for information panel
+        this.appNumberLabel = new JLabel("");
+//        yourIpLabel.setFont(new Font("serif", Font.BOLD, 25));
+        topC.fill = GridBagConstraints.HORIZONTAL;
+//        c.insets = new Insets(5, 15, 10, 15);
+        topC.gridwidth = 1;
+        topC.gridx = 1;
+        topC.gridy = 0;
+        topInformationPanel.add(appNumberLabel, topC);
+
+//      Setting information labels for information panel
+        this.yourIpLabel = new JLabel("  ip-");
+//        yourIpLabel.setFont(new Font("serif", Font.BOLD, yourIpLabel.getFont().getSize()));
+        topC.fill = GridBagConstraints.HORIZONTAL;
+//        c.insets = new Insets(5, 15, 10, 15);
+        topC.gridwidth = 1;
+        topC.gridx = 2;
         topC.gridy = 0;
         topInformationPanel.add(yourIpLabel, topC);
 
@@ -150,17 +170,17 @@ public class ClientView {
         topC.fill = GridBagConstraints.HORIZONTAL;
 //        c.insets = new Insets(5, 15, 10, 15);
         topC.gridwidth = 1;
-        topC.gridx = 1;
+        topC.gridx = 3;
         topC.gridy = 0;
         topInformationPanel.add(ipLabel, topC);
 
 
-        this.yourPortLabel = new JLabel(" Your port: ");
-//        yourPortLabel.setFont(new Font("serif", Font.BOLD, 25));
+        this.yourPortLabel = new JLabel("  port-");
+//        yourPortLabel.setFont(new Font("serif", Font.BOLD, yourPortLabel.getFont().getSize()));
         topC.fill = GridBagConstraints.HORIZONTAL;
 //        c.insets = new Insets(5, 15, 10, 15);
         topC.gridwidth = 1;
-        topC.gridx = 2;
+        topC.gridx = 4;
         topC.gridy = 0;
         topInformationPanel.add(yourPortLabel, topC);
 
@@ -170,7 +190,7 @@ public class ClientView {
         topC.fill = GridBagConstraints.HORIZONTAL;
 //        c.insets = new Insets(5, 15, 10, 15);
         topC.gridwidth = 1;
-        topC.gridx = 3;
+        topC.gridx = 5;
         topC.gridy = 0;
         topInformationPanel.add(portLabel, topC);
 
@@ -273,6 +293,7 @@ public class ClientView {
         return filesList;
     }
 
-
-
+    public JLabel getAppNumberLabel() {
+        return appNumberLabel;
+    }
 }

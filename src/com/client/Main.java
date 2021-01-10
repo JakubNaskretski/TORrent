@@ -4,15 +4,44 @@ import com.client.view.ClientView;
 
 public class Main {
     public static void main(String[] args) {
-        ClientView clientView = new ClientView();
+        ClientView clientView1 = new ClientView();
+        ClientView clientView2 = new ClientView();
 
-        Client client = new Client();
-        client.connectWithTracker();
-        Client client1 = new Client();
-        client1.connectWithTracker();
+        Thread t1 = new Thread(() -> {
+            System.out.println("Starting Thread from main: "+Thread.currentThread().getName());
+            Client client1 = new Client();
+//            client1.connectWithTracker();
 
-        clientView.getIpLabel().setText(client.getHostingIp());
-        clientView.getPortLabel().setText(String.valueOf(client.getHostingPort()));
+            clientView1.getAppNumberLabel().setText(String.valueOf(client1.getCurrentAppNumber()));
+            clientView1.getIpLabel().setText(client1.getHostingIp());
+            clientView1.getPortLabel().setText(String.valueOf(client1.getCurrentAppHostingPort()));
+
+//            client1.loadFilesToShare();
+//            client1.startSocketForSeeding();
+//            client1.printSeedersFiles();
+        });
+
+        Thread t2 = new Thread(() -> {
+            System.out.println("Starting Thread from main: "+Thread.currentThread().getName());
+            Client client2 = new Client();
+//            client2.connectWithTracker();
+
+            clientView2.getAppNumberLabel().setText(String.valueOf(client2.getCurrentAppNumber()));
+            clientView2.getIpLabel().setText(client2.getHostingIp());
+            clientView2.getPortLabel().setText(String.valueOf(client2.getCurrentAppHostingPort()));
+
+//            client2.askSeedersForFilesList();
+//            client2.printSeedersFiles();
+        });
+
+        t1.start();
+        t2.start();
+
+
+
+
+
+
 
 
     }

@@ -17,7 +17,7 @@ public class Tracker {
 
     public Tracker(int port) {
         try {
-            seedersList.add(new SeederModel(0, "111.1111.111", 234, 2342));
+//            seedersList.add(new SeederModel(0, "111.1111.111", 234, 2342));
             serverSocket = new ServerSocket(port);
 
 //          Run infinite loop for getting client request
@@ -54,7 +54,7 @@ public class Tracker {
         private final Socket client;
         private String receivedData;
 
-        // Constructor
+//      Constructor
         public ClientHandler(Socket socket) {
             this.client = socket;
         }
@@ -112,7 +112,7 @@ public class Tracker {
 //              Checks if client is in list with seeders
                 boolean containsHost = false;
 
-                synchronized (seedersList) {
+//                synchronized (seedersList) {
 
                     for (SeederModel element : seedersList) {
                         if (element.getSeederAppNumber().equals(clientNumber) && element.getSeederIp().equals(clientIp) && element.getSeederPort().equals(clientPort)) {
@@ -129,7 +129,20 @@ public class Tracker {
                             System.out.println(element);
                         }
                     }
-                }
+//                }
+
+//                try {
+//                    if (writer != null) {
+//                        writer.close();
+//                    }
+//                    if (reader != null) {
+//                        reader.close();
+//                        System.out.println("Dissconnecting from: "+client.getPort());
+//                        client.close();
+//                    }
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
 
             } catch (IOException e) {
                 e.printStackTrace();
@@ -140,6 +153,7 @@ public class Tracker {
                     }
                     if (reader != null) {
                         reader.close();
+                        System.out.println("Dissconnecting from: "+client.getPort());
                         client.close();
                     }
                 } catch (IOException e) {
