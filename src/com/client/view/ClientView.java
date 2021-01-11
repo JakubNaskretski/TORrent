@@ -24,7 +24,7 @@ public class ClientView {
     private int mainFrameWidth, mainFrameHeight;
 
     private JLabel appNumberLabel, yourAppNumberLabel, yourIpLabel, ipLabel, yourPortLabel, portLabel;
-    private JButton sendFileButton, downloadFileButton;
+    private JButton reloadHostsList, reloadFiles, sendFileButton, downloadFileButton;
 
     private ArrayList<JPanel> seedersJPanelList, filesList;
     private ArrayList<SeederModel> seeders;
@@ -89,8 +89,8 @@ public class ClientView {
 //      Creating files panel
         rightFilesPanel = new JPanel(new GridBagLayout());
         rightFilesPanel.setLayout(new BoxLayout(rightFilesPanel, BoxLayout.Y_AXIS));
-        rightFilesPanel.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/3));
         rightFilesScrollPanel = new JScrollPane(rightFilesPanel);
+        rightFilesScrollPanel.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/3));
 //      Set scrolling unit
 //        rightFilesScrollPanel.getVerticalScrollBar().setUnitIncrement((int) blockDimensions.getHeight());
         rightFilesScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -106,11 +106,11 @@ public class ClientView {
 //      Creating seeders panel
         leftSeedersPanel = new JPanel(new GridBagLayout());
         leftSeedersPanel.setLayout(new BoxLayout(leftSeedersPanel, BoxLayout.Y_AXIS));
-        leftSeedersPanel.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/3));
         leftSeedersScrollPanel = new JScrollPane(leftSeedersPanel);
+        leftSeedersScrollPanel.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/3));
 //      Set scrolling unit
-//        leftSeedersScrollPanel.getVerticalScrollBar().setUnitIncrement((int) blockDimensions.getHeight());
-        leftSeedersScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+//        leftSeedersScrollPanel.getVerticalScrollBar().setUnitIncrement(3);
+//        leftSeedersScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
 //      Add left panel to the main
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -205,14 +205,24 @@ public class ClientView {
 
 
 //      Setting information buttons for buttons panel
-        this.sendFileButton = new JButton("Send file");
+        this.reloadHostsList = new JButton("Reload hosts");
         buttonsC.fill = GridBagConstraints.HORIZONTAL;
-        sendFileButton.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/12));
+        reloadHostsList.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/12));
+//        c.insets = new Insets(5, 15, 10, 15);
+        buttonsC.gridwidth = 2;
+        buttonsC.gridx = 0;
+        buttonsC.gridy = 0;
+        buttonsPanel.add(reloadHostsList, buttonsC);
+
+//      Setting information buttons for buttons panel
+        this.reloadFiles = new JButton("Reload files");
+        buttonsC.fill = GridBagConstraints.HORIZONTAL;
+        reloadFiles.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/12));
 //        c.insets = new Insets(5, 15, 10, 15);
         buttonsC.gridwidth = 2;
         buttonsC.gridx = 2;
         buttonsC.gridy = 0;
-        buttonsPanel.add(sendFileButton, buttonsC);
+        buttonsPanel.add(reloadFiles, buttonsC);
 
         this.downloadFileButton = new JButton("Download file");
         buttonsC.fill = GridBagConstraints.HORIZONTAL;
@@ -220,8 +230,18 @@ public class ClientView {
 //        c.insets = new Insets(5, 15, 10, 15);
         buttonsC.gridwidth = 2;
         buttonsC.gridx = 0;
-        buttonsC.gridy = 0;
+        buttonsC.gridy = 1;
         buttonsPanel.add(downloadFileButton, buttonsC);
+
+//      Setting information buttons for buttons panel
+        this.sendFileButton = new JButton("Send file");
+        buttonsC.fill = GridBagConstraints.HORIZONTAL;
+        sendFileButton.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/12));
+//        c.insets = new Insets(5, 15, 10, 15);
+        buttonsC.gridwidth = 2;
+        buttonsC.gridx = 2;
+        buttonsC.gridy = 1;
+        buttonsPanel.add(sendFileButton, buttonsC);
 
 
 //      Adds main panel to the frame
@@ -268,7 +288,7 @@ public class ClientView {
 
 //  Adds information about seeders to the list from which later will be displayed seeders list
     public void createSeedersJPanelsArray() {
-
+        seedersJPanelList.clear();
 //      sorts seeders models list
         Collections.sort(seeders, SeederModel.AppNoComparator);
         for (SeederModel seeder : seeders) {
@@ -391,5 +411,13 @@ public class ClientView {
 
     public JLabel getAppNumberLabel() {
         return appNumberLabel;
+    }
+
+    public JButton getReloadHostsList() {
+        return reloadHostsList;
+    }
+
+    public JButton getReloadFiles() {
+        return reloadFiles;
     }
 }

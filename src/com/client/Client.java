@@ -105,7 +105,15 @@ public class Client {
 
 //      Tries to connect with the tracker in order to get information about seeders
 //        new Thread(() -> {
-            connectWithTracker();
+//            while (true) {
+                connectWithTracker();
+//                System.out.println("loop");
+//                try {
+//                    Thread.sleep(4000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
 //        }).start();
 
 //      Starts listening for other seeders
@@ -131,7 +139,6 @@ public class Client {
 
         int tmpAppNo = 0;
 
-        // Always good practice to enclose locks in a try-finally block
         try{
 
             applicationNumber++;
@@ -145,27 +152,6 @@ public class Client {
         }
         return tmpAppNo;
     }
-
-////  Increments App counter and Port number
-//    static int incrementPortNo(){
-//
-//        counterLock.lock();
-//
-//        int tmpHostNo = 0;
-//
-//        // Always good practice to enclose locks in a try-finally block
-//        try{
-//
-//            hostingPort++;
-//
-//            tmpHostNo = hostingPort;
-//
-//                    System.out.println(Thread.currentThread().getName() + ": " + applicationNumber);
-//        }finally{
-//            counterLock.unlock();
-//        }
-//        return tmpHostNo;
-//    }
 
 
 //  Reads files in folder of app and makes list of files ready to seed
@@ -199,37 +185,48 @@ public class Client {
 
 //  Connects current app with tracker
     public void connectWithTracker() {
+
+        counterLock.lock();
+
         try {
+            try {
 //          Creates socket to connect with tracker
-            this.socketForCommAsAClient = new Socket(trackerIp, trackerPort);
+                this.socketForCommAsAClient = new Socket(trackerIp, trackerPort);
 
 //          Creates output stream buffer for writing data to tracker
-            outputStream = socketForCommAsAClient.getOutputStream();
-            out= new BufferedWriter(new OutputStreamWriter(outputStream, "UTF8"));
+                outputStream = socketForCommAsAClient.getOutputStream();
+                out = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF8"));
 
 //          Creates input stream buffer for getting data from the tracker
-            inputStream = socketForCommAsAClient.getInputStream();
-            in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
+                inputStream = socketForCommAsAClient.getInputStream();
+                in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
 
 //          Prints out information if successfully connected with tracker
 //            System.out.println("Connection established with Tracker by app: "+Thread.currentThread().getName()+" "+currentAppNumber);
 
 //          Set up connection flag
-            connectedToTracker = true;
+                connectedToTracker = true;
 
-        } catch (ConnectException e) {
-            System.out.println("Could not connect to the Tracker by app: "+currentAppNumber);
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            } catch (ConnectException e) {
+                System.out.println("Could not connect to the Tracker by app: " + currentAppNumber);
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 //      Calls method responsible for communication with tracker
-        getSeedersList();
-    };
+            getSeedersList();
+        } finally {
+            counterLock.unlock();
+        }
+    }
 
 
 //  Asks for seeders list from tracker (if connected) and gives its own data to update list on tracker
     private void getSeedersList() {
+
+//      Clears seeder array for reuse
+        seedersArray.clear();
+
 
             if (connectedToTracker) {
                 try {
@@ -272,31 +269,31 @@ public class Client {
                             Integer tmpHostHash = Integer.valueOf(tmp.get(3));
 
                             //              Checks if client is in list with seeders
-                            boolean containsSeeder = false;
+//                            boolean containsSeeder = false;
 
                                 for (SeederModel seederModel : seedersArray) {
                                     if ((seederModel.getSeederAppNumber().equals(tmpAppNo) && seederModel.getSeederIp().equals(tmpHostIp) && seederModel.getSeederPort().equals(tmpHostPort))) {
-                                        containsSeeder = true;
+//                                        containsSeeder = true;
 //                                      If found in list no need to continue searching
-                                        break;
+                                        continue;
                                     }
                                 }
 
                                 if (tmpAppNo == currentAppNumber) {
-                                    containsSeeder = true;
+//                                    containsSeeder = true;
 //                                  If found in list no need to continue searching
-                                    break;
+                                    continue;
                                 }
 
 //                  TODO: Fix null data received on first connection with tracker
 //                  If not, add new object with seeder data to the list
-                                if (containsSeeder == false) {
+//                                if (containsSeeder == false) {
 //                      If element is not the same as current app
 //                            if (!tmpAppNo.equals(Integer.valueOf(currentAppNumber))) {
 //              Creates SeederModel as a store of possible to connect seeders and places them into array
                                     seedersArray.add(new SeederModel(tmpAppNo, tmpHostIp, tmpHostPort, tmpHostHash));
 //                            }
-                                }
+//                                }
                         } catch (NumberFormatException E) {
                             System.out.println("No data of seeders have been downloaded from tracker");
                         }

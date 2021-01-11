@@ -120,7 +120,7 @@ public class Tracker {
                         if (element.getSeederAppNumber().equals(clientNumber) && element.getSeederIp().equals(clientIp) && element.getSeederPort().equals(clientPort)) {
                             containsHost = true;
 //                          If found in list no need to continue searching
-                            break;
+                            continue;
                         }
                     }
 //                  If not, add new object with client data to the list
