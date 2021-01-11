@@ -99,6 +99,7 @@ public class Main {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     client.connectWithTracker();
+                    client.askSeedersForFilesList();
 
                     clientView.setSeeders(client.getSeedersArray());
                     clientView.createSeedersJPanelsArray();

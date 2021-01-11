@@ -30,7 +30,7 @@ public class ClientView {
     private ArrayList<SeederModel> seeders;
 
     private int currentlyChoosedSeeder = 0;
-    private int prviouslyChoosedSeeder = 0;
+    private int prviouslyChoosedSeeder;
 
     public ClientView() {
 
@@ -255,6 +255,9 @@ public class ClientView {
         frame.repaint();
     }
 
+
+
+
 //
 //    // Repaints container with ToDOTasks
 //    public void revaluateToDoList(){
@@ -320,6 +323,34 @@ public class ClientView {
                     prviouslyChoosedSeeder = currentlyChoosedSeeder;
                     currentlyChoosedSeeder = seederNumberInList;
                     clickedJPanelVisual();
+
+//                  Clears JPanel files list
+                    filesList.clear();
+
+//                  Creates JPanel array containign all files for clicked App
+                    for (String fileName : seeder.getFilesMap().keySet()) {
+//                      For each file, create JPanel and add it to files JPanel list
+                        filesList.add(createFilePanel(fileName));
+                    }
+
+                    rightFilesPanel.removeAll();
+
+                    for (JPanel fileJPanel : filesList) {
+
+                        //          Changing look of the JPanel
+                        fileJPanel.setBorder(BorderFactory.createTitledBorder(
+                                BorderFactory.createRaisedBevelBorder(), "",
+                                TitledBorder.CENTER,
+                                TitledBorder.TOP));
+
+                        fileJPanel.setMaximumSize(new Dimension(((mainFrameWidth/2)),mainFrameHeight/15));
+
+//                      Adds JPanel with file to the right JPanel
+                        rightFilesPanel.add(fileJPanel);
+                    }
+
+                    repaintFrame();
+
                 }
             }
         });
@@ -338,10 +369,52 @@ public class ClientView {
         return tmpPanel;
     }
 
+
+    //  Creates separate JPanel for given seeders files
+    public JPanel createFilePanel(String fileName) {
+
+        GridBagLayout gridBagLayout = new GridBagLayout();
+        GridBagConstraints c = new GridBagConstraints();
+
+        JPanel tmpPanel = new JPanel();
+        tmpPanel.setLayout(gridBagLayout);
+
+        JTextField tmpJTextField = new JTextField(fileName);
+        tmpJTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+//      Sets info about notes in view or removes task
+        tmpJTextField.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON3) {
+                    System.out.println("Kliknięto prawym przyciskiem na plik");
+                } else if (e.getButton() == MouseEvent.BUTTON1) {
+                    System.out.println("Klinięto lewym przyciskiem na plik");
+                }
+            }
+        });
+
+        tmpJTextField.setBorder(null);
+        tmpJTextField.setEditable(false);
+        c.fill = GridBagConstraints.HORIZONTAL;
+//        c.weightx = 0.8;
+//        c.gridwidth = 1;
+//        c.gridx = 1;
+//        c.gridy = 0;
+        tmpPanel.add(tmpJTextField, c);
+
+//        tmpPanel.setPreferredSize(new Dimension((int)((mainFrameWidth/3)*0.99),mainFrameHeight/20));
+
+        return tmpPanel;
+    }
+
+
+
+
 //  Changes borders visual according to the currently clicked JPanel
     public void clickedJPanelVisual() {
 //      If there was previously changed JPanel
-        if (prviouslyChoosedSeeder != 0){
+        if (prviouslyChoosedSeeder >= 0){
 //          Return normal border
             seedersJPanelList.get(prviouslyChoosedSeeder).setBorder(BorderFactory.createTitledBorder(
                     BorderFactory.createRaisedBevelBorder(), "",
@@ -367,7 +440,7 @@ public class ClientView {
                     TitledBorder.CENTER,
                     TitledBorder.TOP));
 
-            seederJPanel.setMaximumSize(new Dimension((int)((mainFrameWidth/2)),mainFrameHeight/15));
+            seederJPanel.setMaximumSize(new Dimension(((mainFrameWidth/2)),mainFrameHeight/15));
 
             leftSeedersPanel.add(seederJPanel);
         }

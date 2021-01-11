@@ -129,7 +129,7 @@ public class Client {
             askSeedersForFilesList();
 //        }).start();
 //      print information about seeders with files
-            printSeedersFiles();
+//            printSeedersFiles();
 
     };
 
