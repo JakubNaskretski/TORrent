@@ -13,13 +13,13 @@ public class Client {
 
 //    TODO: If no host currently online inform about no seeders
 
-//    1. Class connects after creating with tracker. Gives its Ip and Port
-//    2. Tracker returns list of other Seeders
-//    3. Class connects with each class asking for possible to download files
-//    4. Class can chose file to download it from one host (if only one has it)
-//    5. Class can download parts of the file from different hosts (if file is split for different hosts)
-//    6. Class can send files to a host (Starting connection from sender)
-//    7. If downloading file was interrupted, there should be possibility to continue sending from the part where it has stopped
+//    Wymiana list udostępnianych plików między hostami -  chcemy wiedzieć gdzie (na jakim hoście) jakie pliki się znajdują, wraz z ich sumami kontrolnymi MD5 – wersje (H2H, MH, TCP) (1 pkt.).
+//    Przesyłanie plików typu PULL – ściągamy z wybranego hosta plik o zadanej nazwie - wersje (H2H, MH, TCP) (2 pkt.).
+//    Przesyłanie plików typu PUSH – wrzucamy na wybrany host pliku o zadanej nazwie – wersje (H2H, MH, TCP) (1 pkt.).
+//    Wznawianie transmisji pliku w przypadku jej przerwania lub rozłączenia – wersje (H2H, MH, TCP) (2 pkt.).
+//    Ściąganie tego samego pliku (ale różnych jego części) z wielu hostów jednocześnie – wersja (MH, TCP) (2 pkt).
+//    Dodatkowo aplikacja powinna pracować również pod nadzorem protokołu UDP (3 pkt.). ten punkt robimy jak poprzednie są zrobione - to są punkty bonusowe.
+//    Pomiar czasu pozostałego do końca przesyłania plik (1 pkt.). ten punkt robimy jak poprzednie są zrobione  to są punkty bonusowe.
 
 
 //  Default app number increasing for each instance of app created
@@ -94,8 +94,8 @@ public class Client {
         this.hostAppFiles = new ArrayList<>();
 
 //      Creates directory to store host files
-//        this.hostingFilesFolder = "D:\\\\TORrent_"+currentAppNumber+"\\";
-        this.hostingFilesFolder = "C:\\Users\\jnaskretski\\Desktop\\TORrent\\"+currentAppNumber+"\\";
+        this.hostingFilesFolder = "D:\\TORrent_"+currentAppNumber+"\\";
+//        this.hostingFilesFolder = "C:\\Users\\jnaskretski\\Desktop\\TORrent\\"+currentAppNumber+"\\";
 
 
 
@@ -157,6 +157,8 @@ public class Client {
 //  Reads files in folder of app and makes list of files ready to seed
 //  Loads files which may be send
     public void loadFilesToShare() {
+
+            hostAppFiles.clear();
 
             File folder = new File(hostingFilesFolder);
             if (!folder.exists()) {
@@ -507,15 +509,12 @@ public class Client {
 
                     String currentLine;
 
-
                         while ((currentLine = in.readLine()) != null) {
                             strB.append(currentLine);
                             strB.append("\n");
                         }
 
                         receivedData = strB.toString();
-
-                    System.out.println("Got here !");
 
 //                  Prevents doing next lines if received filesData is empty
                     if (!receivedData.isEmpty()) {
@@ -561,6 +560,119 @@ public class Client {
     }
 
 
+
+
+    //  Asks each seeder in array for list of files to download and updates files in each seeder
+    public void askSeedersForFileToDownload(String fileName, String host, Integer port) {
+
+        try {
+            if (fileName != null) {
+
+//              Creates socket to connect with seeder
+                this.socketForCommAsAClient = new Socket(host, Integer.valueOf(port));
+
+
+//              Creates output stream buffer for writing data to seeder
+                outputStream = socketForCommAsAClient.getOutputStream();
+                out = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF8"));
+
+//          Creates input stream buffer for getting data from the seeder
+                inputStream = socketForCommAsAClient.getInputStream();
+                in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
+
+//              Data input stream for File
+                DataInputStream inputStream = new DataInputStream(
+                        new BufferedInputStream(socketForCommAsAClient.getInputStream()));
+
+                int bufferSize = 8192;
+                byte[] buf = new byte[bufferSize];
+                long passedlen = 0;
+                long len = 0;
+
+
+//              Sends request to the other seeder
+                out.append("SEND");
+                out.append("\n");
+                out.flush();
+
+//              Sending file name to the other seeder
+                out.append(fileName);
+                out.append("\n");
+                out.flush();
+
+
+//         Iterate over files already in app folder
+                for (File file : hostAppFiles) {
+//              If app already contains file with same name
+                    if (file.getName().equals(fileName)) {
+//                  Find index of . before downloading file extension
+                        int extensionDotIndex = fileName.lastIndexOf('.');
+//                  Add -copy before extension .
+                        fileName = fileName.substring(0, extensionDotIndex) + "-copy" + fileName.substring(extensionDotIndex);
+                    }
+                }
+
+                // Get the file name
+                String file = hostingFilesFolder + fileName;
+
+                DataOutputStream fileOut = new DataOutputStream(
+                        new BufferedOutputStream(new FileOutputStream(file)));
+
+                len = inputStream.readLong();
+
+                while (true) {
+                    int read = 0;
+                    if (inputStream != null) {
+                        read = inputStream.read(buf);
+                    }
+                    passedlen += read;
+                    if (read == -1) {
+                        break;
+                    }
+                    // The following progress bar is made for the prograssBar of the graphical interface. If you are typing a file, you may repeat the same percentage.
+                    System.out.println("File Received" + (passedlen * 100 / len)
+                            + "%\n");
+                    fileOut.write(buf, 0, read);
+                }
+                System.out.println("Receive completed, file saved as" + file + "\n");
+
+                fileOut.close();
+
+                loadFilesToShare();
+            }
+
+        } catch (UnknownHostException unknownHostException) {
+            unknownHostException.printStackTrace();
+        } catch (UnsupportedEncodingException unsupportedEncodingException) {
+            unsupportedEncodingException.printStackTrace();
+        } catch (FileNotFoundException fileNotFoundException) {
+            fileNotFoundException.printStackTrace();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        } finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+                if (out != null) {
+                    out.close();
+                    socketForCommAsAClient.close();
+                }
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+
+
 //  TODO: Verify if it is needed to create socket from the beginning for each connection
 //  Makes connection with particular seeder
     public void connectWithSeeder() {
@@ -586,62 +698,6 @@ public class Client {
     };
 
 
-//  Ask particular seeder for files list
-//    public ArrayList<File> askSeederForFile(){
-//
-//        try {
-//            out.append(socket.hashCode()+"\n");
-//            out.append("Example name\n");
-//            out.append("Example ip\n");
-//            out.append(socket.getPort()+"\n");
-//            out.flush();
-//
-////            out.close();
-//
-//
-////            Read list of seeders
-//            receivedData = new String();
-//
-//            StringBuffer strB = new StringBuffer(receivedData);
-//
-//            String currentLine;
-//
-////            strB.append(in.readLine());
-//
-//            while ((currentLine = in.readLine())!= null) {
-//                strB.append(currentLine);
-//                strB.append("\n");
-//            }
-//
-//            receivedData = strB.toString();
-//
-////            Splits input to a list
-//            List<String> receivedSeedersList = splitReceivedSeedersData(receivedData);
-//
-//            for (String element : receivedSeedersList) {
-//
-//                List<String> tmp = splitSeedersListByIpPort(element);
-//
-//                seedersArray.put(tmp.get(0), Integer.valueOf(tmp.get(1)));
-//
-//            }
-//
-//            // using for-each loop for iteration over Map.entrySet()
-//            for (Map.Entry<String, Integer> entry : seedersArray.entrySet())
-//                System.out.println("Key = " + entry.getKey() +
-//                        ", Value = " + entry.getValue());
-//
-////        out.close();
-////            in.close();
-//            socket.close();
-//
-//        } catch (IOException e) {
-//
-//            e.printStackTrace();
-//        }
-//
-//        return null;
-//    }
 
 // TODO: Should it be in a different thread ?
     public void startSocketForSeeding() {
@@ -728,6 +784,37 @@ public class Client {
 //              Another seeder asks for sending file to this app
                 case "SEND":
                     writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"));
+
+//                  Get name of the file to send
+                    String fileName = reader.readLine();
+
+                    File fi = new File(hostingFilesFolder + fileName);
+
+                    DataInputStream fis = new DataInputStream(new FileInputStream(hostingFilesFolder + fileName));
+                    DataOutputStream ps = new DataOutputStream(client.getOutputStream());
+
+                    ps.writeLong((long) fi.length());
+                    ps.flush();
+
+                    int bufferSize = 8192;
+                    byte[] buf = new byte[bufferSize];
+
+                    while (true) {
+                        int read = 0;
+                        if (fis != null) {
+                            read = fis.read(buf);
+                        }
+
+                        if (read == -1) {
+                            break;
+                        }
+                        ps.write(buf, 0, read);
+                    }
+                    ps.flush();
+                    // Note that the socket link is closed, otherwise the client will wait for the server data to come over.
+                    // Until the socket times out, the data is incomplete.
+                    fis.close();
+                    ps.close();
                     break;
             }
         } catch (IOException e) {

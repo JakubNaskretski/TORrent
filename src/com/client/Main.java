@@ -108,6 +108,23 @@ public class Main {
                 }
             });
 
+
+            clientView.getDownloadFileButton().addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+//                  Client application asks the seeder who owns currently choosen file for download file
+                    client.askSeedersForFileToDownload(
+//                          Get currently choosen (clicked) file name
+                            clientView.getCurrentlyChoosenFileName(),
+//                          Get from seeders list (from view), currently selected seeder ip
+                            clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederIp(),
+//                          And port
+                            clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederPort());
+
+                }
+            });
+
         }).start();
 
     }

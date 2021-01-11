@@ -8,7 +8,6 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 
 public class ClientView {
@@ -29,8 +28,10 @@ public class ClientView {
     private ArrayList<JPanel> seedersJPanelList, filesList;
     private ArrayList<SeederModel> seeders;
 
-    private int currentlyChoosedSeeder = 0;
-    private int prviouslyChoosedSeeder;
+    private int currentlyChosenSeeder = 0;
+    private int previouslyChosenSeeder;
+    private int previouslyChosenFileNo, currentlyChosenFileNo;
+    private String currentlyChoosenFileName;
 
     public ClientView() {
 
@@ -50,6 +51,7 @@ public class ClientView {
 
         this.mainFrameDimension = new Dimension(mainFrameWidth, mainFrameHeight);
         frame.setSize(mainFrameDimension);
+        frame.setResizable(false);
         frame.setLocation(((screenWidth / 2) - (screenWidth / 4)), ((screenHeight / 2) - (screenHeight / 4)));
         frame.setLocationRelativeTo(null);
 
@@ -320,17 +322,21 @@ public class ClientView {
                 if (e.getButton() == MouseEvent.BUTTON3) {
                     System.out.println("Kliknięto prawym");
                 } else if (e.getButton() == MouseEvent.BUTTON1) {
-                    prviouslyChoosedSeeder = currentlyChoosedSeeder;
-                    currentlyChoosedSeeder = seederNumberInList;
-                    clickedJPanelVisual();
+                    previouslyChosenSeeder = currentlyChosenSeeder;
+                    currentlyChosenSeeder = seederNumberInList;
+                    clickedJPanelVisualSeeders();
 
 //                  Clears JPanel files list
                     filesList.clear();
 
+//                  Counter used to get numeration of files for border change
+                    int fileNumber = 0;
+
 //                  Creates JPanel array containign all files for clicked App
                     for (String fileName : seeder.getFilesMap().keySet()) {
 //                      For each file, create JPanel and add it to files JPanel list
-                        filesList.add(createFilePanel(fileName));
+                        filesList.add(createFilePanel(fileName, fileNumber));
+                        fileNumber++;
                     }
 
                     rightFilesPanel.removeAll();
@@ -371,7 +377,7 @@ public class ClientView {
 
 
     //  Creates separate JPanel for given seeders files
-    public JPanel createFilePanel(String fileName) {
+    public JPanel createFilePanel(String fileName, int fileNumber) {
 
         GridBagLayout gridBagLayout = new GridBagLayout();
         GridBagConstraints c = new GridBagConstraints();
@@ -389,6 +395,10 @@ public class ClientView {
                 if (e.getButton() == MouseEvent.BUTTON3) {
                     System.out.println("Kliknięto prawym przyciskiem na plik");
                 } else if (e.getButton() == MouseEvent.BUTTON1) {
+                    previouslyChosenFileNo = currentlyChosenFileNo;
+                    currentlyChosenFileNo = fileNumber;
+                    currentlyChoosenFileName = fileName;
+                    clickedJPanelVisualFiles();
                     System.out.println("Klinięto lewym przyciskiem na plik");
                 }
             }
@@ -412,17 +422,33 @@ public class ClientView {
 
 
 //  Changes borders visual according to the currently clicked JPanel
-    public void clickedJPanelVisual() {
+    public void clickedJPanelVisualSeeders() {
 //      If there was previously changed JPanel
-        if (prviouslyChoosedSeeder >= 0){
+        if (previouslyChosenSeeder >= 0){
 //          Return normal border
-            seedersJPanelList.get(prviouslyChoosedSeeder).setBorder(BorderFactory.createTitledBorder(
+            seedersJPanelList.get(previouslyChosenSeeder).setBorder(BorderFactory.createTitledBorder(
                     BorderFactory.createRaisedBevelBorder(), "",
                     TitledBorder.CENTER,
                     TitledBorder.TOP));
         }
 //      Change border in new JPanel
-        seedersJPanelList.get(currentlyChoosedSeeder).setBorder(BorderFactory.createLoweredBevelBorder());
+        seedersJPanelList.get(currentlyChosenSeeder).setBorder(BorderFactory.createLoweredBevelBorder());
+        repaintFrame();
+    }
+
+
+//  Changes borders visual according to the currently clicked JPanel
+    public void clickedJPanelVisualFiles() {
+//      If there was previously changed JPanel
+        if (previouslyChosenFileNo >= 0){
+//          Return normal border
+            filesList.get(previouslyChosenFileNo).setBorder(BorderFactory.createTitledBorder(
+                    BorderFactory.createRaisedBevelBorder(), "",
+                    TitledBorder.CENTER,
+                    TitledBorder.TOP));
+        }
+//      Change border in new JPanel
+        filesList.get(currentlyChosenFileNo).setBorder(BorderFactory.createLoweredBevelBorder());
         repaintFrame();
     }
 
@@ -533,5 +559,21 @@ public class ClientView {
 
     public JButton getReloadFiles() {
         return reloadFiles;
+    }
+
+    public int getCurrentlyChosenSeeder() {
+        return currentlyChosenSeeder;
+    }
+
+    public int getCurrentlyChosenFileNo() {
+        return currentlyChosenFileNo;
+    }
+
+    public String getCurrentlyChoosenFileName() {
+        return currentlyChoosenFileName;
+    }
+
+    public ArrayList<SeederModel> getSeeders() {
+        return seeders;
     }
 }
