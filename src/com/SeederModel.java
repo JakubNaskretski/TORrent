@@ -1,8 +1,6 @@
-package com.tracker;
+package com;
 
-import com.client.File;
-
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 
 public class SeederModel {
@@ -51,4 +49,19 @@ public class SeederModel {
                 ", filesList=" + filesList +
                 '}';
     }
+
+
+    public static Comparator<SeederModel> AppNoComparator = new Comparator<SeederModel>() {
+
+        public int compare(SeederModel m1, SeederModel m2) {
+
+                Integer no1 = m1.getSeederAppNumber();
+                Integer no2 = m2.getSeederAppNumber();
+
+                //For ascending order
+                return no1-no2;
+
+            }};
+
+
 }

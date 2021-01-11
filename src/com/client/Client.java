@@ -1,6 +1,6 @@
 package com.client;
 
-import com.tracker.SeederModel;
+import com.SeederModel;
 
 import java.io.*;
 import java.net.*;
@@ -520,22 +520,24 @@ public class Client {
 
                     System.out.println("Got here !");
 
+//                  Prevents doing next lines if received filesData is empty
+                    if (!receivedData.isEmpty()) {
+
 //              Splits received seeders data into a list
-                    List<String> receivedFilesOnSeederList = splitStringToListByNLine(receivedData);
+                        List<String> receivedFilesOnSeederList = splitStringToListByNLine(receivedData);
 
 //              For elements in list, split list and add seeders information into the list of SeederModels
-                    for (String element : receivedFilesOnSeederList) {
+                        for (String element : receivedFilesOnSeederList) {
 
 //              Creates tmp list containing base elements of SeederModel
-                        List<String> tmp = splitStringToListByDelimiter(element);
+                            List<String> tmp = splitStringToListByDelimiter(element);
 
-                        String tmpFileName = tmp.get(0);
-                        String tmpFileSize = tmp.get(1);
+                            String tmpFileName = tmp.get(0);
+                            String tmpFileSize = tmp.get(1);
 
-                        seederModel.getFilesMap().put(tmpFileName, tmpFileSize);
+                            seederModel.getFilesMap().put(tmpFileName, tmpFileSize);
 
-////                        TODO: remove tmp line
-//                        printSeedersFiles();
+                        }
                     }
 
 
@@ -778,19 +780,14 @@ public class Client {
         return currentAppHostingPort;
     }
 
+    public ArrayList<SeederModel> getSeedersArray() {
+        return seedersArray;
+    }
+
     public synchronized void printSeedersFiles() {
 
             for (SeederModel seederModel : seedersArray) {
-//                System.out.println("Printing TOSTRING from app: "+currentAppNumber);
                 System.out.println( Thread.currentThread().getName()+" "+currentAppNumber+" "+seederModel.toString()+"\n");
-
-//                for (String filesNames: seederModel.getFilesMap().keySet()){
-//                    String key = filesNames.toString();
-//                    String value = seederModel.getFilesMap().get(filesNames).toString();
-//                    System.out.println(key + " " + value);
-//                }
-
-//            System.out.println(seederModel.getSeederAppNumber()+" "+ seederModel.getSeederAppNumber());
             }
     }
 

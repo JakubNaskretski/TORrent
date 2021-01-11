@@ -1,15 +1,23 @@
 package com.client.view;
 
+import com.SeederModel;
+
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 public class ClientView {
 
     private int screenHeight, screenWidth;
 
     private JFrame frame;
-    private JPanel mainPanel, topInformationPanel, rightFilesPanel, leftSeedersPanel, buttonsPanel, progressBarPanel;
+    private JPanel mainPanel, topInformationPanel, rightFilesPanel, leftSeedersPanel, buttonsPanel, progressBarPanel,
+    hostInformationJPanel;
     private JScrollPane leftSeedersScrollPanel, rightFilesScrollPanel;
 
     private Dimension mainFrameDimension,seederJPanelSize, fileJPanelSize;
@@ -18,7 +26,8 @@ public class ClientView {
     private JLabel appNumberLabel, yourAppNumberLabel, yourIpLabel, ipLabel, yourPortLabel, portLabel;
     private JButton sendFileButton, downloadFileButton;
 
-    private ArrayList<JPanel> seedersList, filesList;
+    private ArrayList<JPanel> seedersJPanelList, filesList;
+    private ArrayList<SeederModel> seeders;
 
 
     public ClientView() {
@@ -29,7 +38,7 @@ public class ClientView {
         this.screenWidth = (int) screenSize.getWidth();
 
 //      Create JPanels
-        this.seedersList = new ArrayList<JPanel>();
+        this.seedersJPanelList = new ArrayList<JPanel>();
         this.filesList = new ArrayList<JPanel>();
 
 //      Create frame
@@ -219,10 +228,11 @@ public class ClientView {
         frame.add(mainPanel);
     }
 
-//    public void repaintFrame(){
-//        frame.revalidate();
-//        frame.repaint();
-//    }
+    public void repaintFrame(){
+        frame.revalidate();
+        frame.repaint();
+    }
+
 //
 //    // Repaints container with ToDOTasks
 //    public void revaluateToDoList(){
@@ -256,6 +266,88 @@ public class ClientView {
 //        frame.revalidate();
 //        frame.repaint();
 
+//  Adds information about seeders to the list from which later will be displayed seeders list
+    public void createSeedersJPanelsArray() {
+
+//      sorts seeders models list
+        Collections.sort(seeders, SeederModel.AppNoComparator);
+        for (SeederModel seeder : seeders) {
+            seedersJPanelList.add(createSeederJPanel(seeder));
+        }
+    }
+
+//  Creates separate JPanel for given seeder model
+    public JPanel createSeederJPanel(SeederModel seeder) {
+
+        GridBagLayout gridBagLayout = new GridBagLayout();
+        GridBagConstraints c = new GridBagConstraints();
+
+        JPanel tmpPanel = new JPanel();
+        tmpPanel.setLayout(gridBagLayout);
+
+        JTextField tmpJTextField = new JTextField(seeder.getSeederAppNumber()+" - "+seeder.getSeederPort());
+        tmpJTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+//      Sets info about notes in view or removes task
+        tmpJTextField.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON3) {
+                    System.out.println("Kliknięto prawym");
+                } else if (e.getButton() == MouseEvent.BUTTON1) {
+                    System.out.println("Kliknięto lewym");
+                }
+            }
+        });
+
+        tmpJTextField.setBorder(null);
+        tmpJTextField.setEditable(false);
+        c.fill = GridBagConstraints.HORIZONTAL;
+//        c.weightx = 0.8;
+//        c.gridwidth = 1;
+//        c.gridx = 1;
+//        c.gridy = 0;
+        tmpPanel.add(tmpJTextField, c);
+
+//        tmpPanel.setPreferredSize(new Dimension((int)((mainFrameWidth/3)*0.99),mainFrameHeight/20));
+
+        return tmpPanel;
+    }
+
+
+//  Adds seeders JPanels to the left ScrollPanel
+    public void addSeedersJPanelListToLeftPanel() {
+//      Removes all previous seeders
+        leftSeedersPanel.removeAll();
+
+        for (JPanel seederJPanel : seedersJPanelList) {
+
+//          Changing look of the JPanel
+            seederJPanel.setBorder(BorderFactory.createTitledBorder(
+                    BorderFactory.createRaisedBevelBorder(), "",
+                    TitledBorder.CENTER,
+                    TitledBorder.TOP));
+
+            seederJPanel.setMaximumSize(new Dimension((int)((mainFrameWidth/2)),mainFrameHeight/15));
+
+            leftSeedersPanel.add(seederJPanel);
+        }
+
+        repaintFrame();
+    }
+
+    //Get information how many hosts are there and put this data to array
+// Create required amount of JPanels for each seeder
+// Each JPanel should be clickable
+//Add JPanel to the left panel
+//Repaint
+
+
+//  Adds
+    public void addSeedersInformationToTheLeftJPanel() {
+
+    }
+
 
     public JFrame getFrame() {
         return frame;
@@ -285,12 +377,16 @@ public class ClientView {
         return downloadFileButton;
     }
 
-    public ArrayList<JPanel> getSeedersList() {
-        return seedersList;
+    public ArrayList<JPanel> getSeedersJPanelList() {
+        return seedersJPanelList;
     }
 
     public ArrayList<JPanel> getFilesList() {
         return filesList;
+    }
+
+    public void setSeeders(ArrayList<SeederModel> seeders) {
+        this.seeders = seeders;
     }
 
     public JLabel getAppNumberLabel() {
