@@ -6,6 +6,7 @@ public class Main {
     public static void main(String[] args) {
         ClientView clientView1 = new ClientView();
         ClientView clientView2 = new ClientView();
+        ClientView clientView3 = new ClientView();
 
         Thread t1 = new Thread(() -> {
             System.out.println("Starting Thread from main: "+Thread.currentThread().getName());
@@ -16,9 +17,6 @@ public class Main {
             clientView1.getIpLabel().setText(client1.getHostingIp());
             clientView1.getPortLabel().setText(String.valueOf(client1.getCurrentAppHostingPort()));
 
-//            client1.loadFilesToShare();
-//            client1.startSocketForSeeding();
-//            client1.printSeedersFiles();
         });
 
         Thread t2 = new Thread(() -> {
@@ -30,12 +28,24 @@ public class Main {
             clientView2.getIpLabel().setText(client2.getHostingIp());
             clientView2.getPortLabel().setText(String.valueOf(client2.getCurrentAppHostingPort()));
 
+
+        });
+
+        Thread t3 = new Thread(() -> {
+            System.out.println("Starting Thread from main: "+Thread.currentThread().getName());
+            Client client3 = new Client();
+
+            clientView3.getAppNumberLabel().setText(String.valueOf(client3.getCurrentAppNumber()));
+            clientView3.getIpLabel().setText(client3.getHostingIp());
+            clientView3.getPortLabel().setText(String.valueOf(client3.getCurrentAppHostingPort()));
+
 //            client2.askSeedersForFilesList();
 //            client2.printSeedersFiles();
         });
 
         t1.start();
         t2.start();
+        t3.start();
 
 
 

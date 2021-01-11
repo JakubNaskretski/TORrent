@@ -33,7 +33,10 @@ public class Client {
     private int currentAppHostingPort;
 
 //  Current app hosting socket
-    private ServerSocket currentAppSocket;
+    private ServerSocket currentAppHostingSocket;
+
+//  Current app client socket
+    private Socket socketForCommAsAClient;
 
 //  default ip
     private String hostingIp = "0.0.0.0";
@@ -63,7 +66,6 @@ public class Client {
 //  List of seeders
     private ArrayList<SeederModel> seedersArray;
 
-    private Socket socket;
     private OutputStream outputStream;
     private InputStream inputStream;
     private BufferedWriter out;
@@ -84,7 +86,7 @@ public class Client {
 
 //      Starts socket for current app
         try {
-            this.currentAppSocket = new ServerSocket(currentAppHostingPort);
+            this.currentAppHostingSocket = new ServerSocket(currentAppHostingPort);
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
@@ -92,13 +94,14 @@ public class Client {
         this.hostAppFiles = new ArrayList<>();
 
 //      Creates directory to store host files
-        this.hostingFilesFolder = "D:\\\\TORrent_"+currentAppNumber+"\\";
+//        this.hostingFilesFolder = "D:\\\\TORrent_"+currentAppNumber+"\\";
+        this.hostingFilesFolder = "C:\\Users\\jnaskretski\\Desktop\\TORrent\\"+currentAppNumber+"\\";
+
+
 
 //      Creates Array for storing seeders list
         seedersArray = new ArrayList<SeederModel>();
 
-//      Loads file to share from folder
-        loadFilesToShare();
 
 //      Tries to connect with the tracker in order to get information about seeders
 //        new Thread(() -> {
@@ -106,19 +109,19 @@ public class Client {
 //        }).start();
 
 //      Starts listening for other seeders
-        new Thread(() -> {
-            startSocketForSeeding();
-        }).start();
+            new Thread(() -> {
+                startSocketForSeeding();
+            }).start();
 
 //      After receiving list of seeders from the tracker and starting hosting
 //      Load files from the folders
         loadFilesToShare();
 //      Ask all other seeders for files
 //        new Thread(() -> {
-        askSeedersForFilesList();
+            askSeedersForFilesList();
 //        }).start();
 //      print information about seeders with files
-        printSeedersFiles();
+            printSeedersFiles();
 
     };
 
@@ -175,6 +178,9 @@ public class Client {
             }
             File[] listOfFiles = folder.listFiles();
 
+        if (listOfFiles != null) {
+
+
             for (int i = 0; i < listOfFiles.length; i++) {
 //          If found element is file
                 if (listOfFiles[i].isFile()) {
@@ -186,20 +192,23 @@ public class Client {
 //                System.out.println("Directory " + listOfFiles[i].getName());
 //            }
             }
+        } else {
+            System.out.println("No files to load in folder");
+        }
     }
 
 //  Connects current app with tracker
     public void connectWithTracker() {
         try {
 //          Creates socket to connect with tracker
-            socket = new Socket(trackerIp, trackerPort);
+            this.socketForCommAsAClient = new Socket(trackerIp, trackerPort);
 
 //          Creates output stream buffer for writing data to tracker
-            outputStream = socket.getOutputStream();
+            outputStream = socketForCommAsAClient.getOutputStream();
             out= new BufferedWriter(new OutputStreamWriter(outputStream, "UTF8"));
 
 //          Creates input stream buffer for getting data from the tracker
-            inputStream = socket.getInputStream();
+            inputStream = socketForCommAsAClient.getInputStream();
             in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
 
 //          Prints out information if successfully connected with tracker
@@ -311,7 +320,7 @@ public class Client {
                         if (in != null) {
                             in.close();
 //                            System.out.println("Dissconnecting from socket - app: " + currentAppNumber + "\n");
-                            socket.close();
+                            socketForCommAsAClient.close();
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -477,14 +486,14 @@ public class Client {
                     Integer tmpSeederPort = seederModel.getSeederPort();
 
 //              Creates socket to connect with seeder
-                    socket = new Socket(tmpSeederIp, tmpSeederPort.intValue());
+                    this.socketForCommAsAClient = new Socket(tmpSeederIp, tmpSeederPort.intValue());
 
                     //          Creates output stream buffer for writing data to seeder
-                    outputStream = socket.getOutputStream();
+                    outputStream = socketForCommAsAClient.getOutputStream();
                     out = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF8"));
 
 //          Creates input stream buffer for getting data from the seeder
-                    inputStream = socket.getInputStream();
+                    inputStream = socketForCommAsAClient.getInputStream();
                     in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
 
 //              Prints out information if successfully connected with tracker
@@ -492,6 +501,7 @@ public class Client {
 
 //              Sends request to the other seeder
                     out.append("LIST");
+                    out.append("\n");
                     out.flush();
 
                     receivedData = new String();
@@ -524,6 +534,8 @@ public class Client {
 
                         seederModel.getFilesMap().put(tmpFileName, tmpFileSize);
 
+////                        TODO: remove tmp line
+//                        printSeedersFiles();
                     }
 
 
@@ -539,7 +551,7 @@ public class Client {
                         }
                         if (out != null) {
                             out.close();
-                            socket.close();
+                            socketForCommAsAClient.close();
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -555,14 +567,14 @@ public class Client {
     public void connectWithSeeder() {
         try {
 //      Creates socket
-        socket = new Socket(trackerIp, trackerPort);
+        socketForCommAsAClient = new Socket(trackerIp, trackerPort);
 
 //      Creates output stream buffer for writing data to tracker
-        outputStream = socket.getOutputStream();
+        outputStream = socketForCommAsAClient.getOutputStream();
         out= new BufferedWriter(new OutputStreamWriter(outputStream, "UTF8"));
 
 //      Creates input stream buffer for getting data from the tracker
-        inputStream = socket.getInputStream();
+        inputStream = socketForCommAsAClient.getInputStream();
         in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
 
 //      Prints out information if successfully connected with tracker
@@ -641,7 +653,7 @@ public class Client {
 //            System.out.println("Started listening on app: "+currentAppNumber+" for seeders requests");
 
 //          Accept socket
-            Socket anotherSeeder = currentAppSocket.accept();
+            Socket anotherSeeder = currentAppHostingSocket.accept();
 
 //          Create a new thread object
             ClientHandler anotherSeederSocket = new ClientHandler(anotherSeeder);
@@ -654,9 +666,9 @@ public class Client {
         e.printStackTrace();
     }
         finally {
-            if (currentAppSocket != null) {
+            if (currentAppHostingSocket != null) {
                 try {
-                    currentAppSocket.close();
+                    currentAppHostingSocket.close();
                 }
                 catch (IOException e) {
                     e.printStackTrace();
@@ -670,7 +682,7 @@ public class Client {
     private  class ClientHandler implements Runnable {
     private final Socket client;
 
-//  Constructor
+    //  Constructor
     public ClientHandler(Socket socket) {
         this.client = socket;
     }
@@ -684,12 +696,14 @@ public class Client {
 
             reader = new BufferedReader(new InputStreamReader(client.getInputStream(), "UTF8"));
 
-            switch (reader.readLine()) {
+            String readLine = reader.readLine();
 
-                
+            switch (readLine) {
+
+
 //              Another seeder asks for files list
                 case "LIST":
-                    reader.close();
+//                    reader.close();
                     writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"));
 //                  Iterates over file list and prints to the output file names
                     for (File fileFromCurrentAp : hostAppFiles) {
@@ -700,18 +714,18 @@ public class Client {
                         writer.append("\n");
                     }
                     writer.flush();
-                    writer.close();
-                    reader.close();
-                    client.close();
+//                    writer.close();
+//                    reader.close();
+//                    client.close();
 //                    writer.append(null);
 //                    writer.flush();
                     break;
-                    
+
 //              Another seeder asks for downloading file
                 case "DOWNLOAD":
                     writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"));
                     break;
-                    
+
 //              Another seeder asks for sending file to this app
                 case "SEND":
                     writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"));
@@ -769,6 +783,13 @@ public class Client {
             for (SeederModel seederModel : seedersArray) {
 //                System.out.println("Printing TOSTRING from app: "+currentAppNumber);
                 System.out.println( Thread.currentThread().getName()+" "+currentAppNumber+" "+seederModel.toString()+"\n");
+
+//                for (String filesNames: seederModel.getFilesMap().keySet()){
+//                    String key = filesNames.toString();
+//                    String value = seederModel.getFilesMap().get(filesNames).toString();
+//                    System.out.println(key + " " + value);
+//                }
+
 //            System.out.println(seederModel.getSeederAppNumber()+" "+ seederModel.getSeederAppNumber());
             }
     }
