@@ -29,6 +29,8 @@ public class ClientView {
     private ArrayList<JPanel> seedersJPanelList, filesList;
     private ArrayList<SeederModel> seeders;
 
+    private int currentlyChoosedSeeder = 0;
+    private int prviouslyChoosedSeeder = 0;
 
     public ClientView() {
 
@@ -291,13 +293,13 @@ public class ClientView {
         seedersJPanelList.clear();
 //      sorts seeders models list
         Collections.sort(seeders, SeederModel.AppNoComparator);
-        for (SeederModel seeder : seeders) {
-            seedersJPanelList.add(createSeederJPanel(seeder));
+        for (int i = 0; i < seeders.size(); i++) {
+            seedersJPanelList.add(createSeederJPanel(seeders.get(i), i));
         }
     }
 
 //  Creates separate JPanel for given seeder model
-    public JPanel createSeederJPanel(SeederModel seeder) {
+    public JPanel createSeederJPanel(SeederModel seeder, int seederNumberInList) {
 
         GridBagLayout gridBagLayout = new GridBagLayout();
         GridBagConstraints c = new GridBagConstraints();
@@ -315,7 +317,9 @@ public class ClientView {
                 if (e.getButton() == MouseEvent.BUTTON3) {
                     System.out.println("Kliknięto prawym");
                 } else if (e.getButton() == MouseEvent.BUTTON1) {
-                    System.out.println("Kliknięto lewym");
+                    prviouslyChoosedSeeder = currentlyChoosedSeeder;
+                    currentlyChoosedSeeder = seederNumberInList;
+                    clickedJPanelVisual();
                 }
             }
         });
@@ -332,6 +336,21 @@ public class ClientView {
 //        tmpPanel.setPreferredSize(new Dimension((int)((mainFrameWidth/3)*0.99),mainFrameHeight/20));
 
         return tmpPanel;
+    }
+
+//  Changes borders visual according to the currently clicked JPanel
+    public void clickedJPanelVisual() {
+//      If there was previously changed JPanel
+        if (prviouslyChoosedSeeder != 0){
+//          Return normal border
+            seedersJPanelList.get(prviouslyChoosedSeeder).setBorder(BorderFactory.createTitledBorder(
+                    BorderFactory.createRaisedBevelBorder(), "",
+                    TitledBorder.CENTER,
+                    TitledBorder.TOP));
+        }
+//      Change border in new JPanel
+        seedersJPanelList.get(currentlyChoosedSeeder).setBorder(BorderFactory.createLoweredBevelBorder());
+        repaintFrame();
     }
 
 
@@ -356,7 +375,29 @@ public class ClientView {
         repaintFrame();
     }
 
-    //Get information how many hosts are there and put this data to array
+//  Adds seeders JPanels to the left ScrollPanel
+    public void addFilesJPanelListToRightPanel() {
+//      Removes all previous seeders
+        rightFilesPanel.removeAll();
+
+        for (JPanel seederJPanel : seedersJPanelList) {
+
+//          Changing look of the JPanel
+            seederJPanel.setBorder(BorderFactory.createTitledBorder(
+                    BorderFactory.createRaisedBevelBorder(), "",
+                    TitledBorder.CENTER,
+                    TitledBorder.TOP));
+
+            seederJPanel.setMaximumSize(new Dimension((int)((mainFrameWidth/2)),mainFrameHeight/15));
+
+            leftSeedersPanel.add(seederJPanel);
+        }
+
+        repaintFrame();
+    }
+
+
+
 // Create required amount of JPanels for each seeder
 // Each JPanel should be clickable
 //Add JPanel to the left panel
