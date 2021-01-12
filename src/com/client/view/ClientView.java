@@ -16,13 +16,19 @@ public class ClientView {
 
     private JFrame frame;
     private JPanel mainPanel, topInformationPanel, rightFilesPanel, leftSeedersPanel, buttonsPanel, progressBarPanel,
-    hostInformationJPanel;
+    hostInformationJPanel, checkSumBar;
     private JScrollPane leftSeedersScrollPanel, rightFilesScrollPanel;
 
     private Dimension mainFrameDimension,seederJPanelSize, fileJPanelSize;
     private int mainFrameWidth, mainFrameHeight;
 
-    private JLabel appNumberLabel, yourAppNumberLabel, yourIpLabel, ipLabel, yourPortLabel, portLabel;
+    private JLabel appNumberLabel;
+    private JLabel yourAppNumberLabel;
+    private JLabel yourIpLabel;
+    private JLabel ipLabel;
+    private JLabel yourPortLabel;
+    private JLabel portLabel;
+    private JTextArea checkSumArea;
     private JButton reloadHostsList, reloadFiles, sendFileButton, downloadFileButton;
 
     private ArrayList<JPanel> seedersJPanelList, filesList;
@@ -124,6 +130,19 @@ public class ClientView {
         mainPanel.add(leftSeedersScrollPanel, c);
 
 
+        //      Creating progress bar panel
+        checkSumBar = new JPanel(new GridBagLayout());
+        GridBagConstraints sumC = new GridBagConstraints();
+        checkSumBar.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/12));
+
+//      Add progress bar panel to the main
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridwidth = 4;
+        c.gridx = 0;
+        c.gridy = 3;
+        mainPanel.add(checkSumBar, c);
+
+
 //      Creating buttons panel
         buttonsPanel = new JPanel(new GridBagLayout());
         GridBagConstraints buttonsC = new GridBagConstraints();
@@ -132,9 +151,8 @@ public class ClientView {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridwidth = 4;
         c.gridx = 0;
-        c.gridy = 3;
+        c.gridy = 4;
         mainPanel.add(buttonsPanel, c);
-
 
 //      Creating progress bar panel
         progressBarPanel = new JPanel(new GridBagLayout());
@@ -144,7 +162,7 @@ public class ClientView {
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridwidth = 4;
         c.gridx = 0;
-        c.gridy = 4;
+        c.gridy = 5;
         mainPanel.add(progressBarPanel, c);
 
 
@@ -178,7 +196,7 @@ public class ClientView {
         topC.gridy = 0;
         topInformationPanel.add(yourIpLabel, topC);
 
-        this.ipLabel = new JLabel("000.000.000.000");
+        this.ipLabel = new JLabel("");
 //        ipLabel.setFont(new Font("serif", Font.BOLD, 25));
         topC.fill = GridBagConstraints.HORIZONTAL;
 //        c.insets = new Insets(5, 15, 10, 15);
@@ -198,7 +216,7 @@ public class ClientView {
         topInformationPanel.add(yourPortLabel, topC);
 
 
-        this.portLabel = new JLabel("44445");
+        this.portLabel = new JLabel("");
 //        yourPortLabel.setFont(new Font("serif", Font.BOLD, 25));
         topC.fill = GridBagConstraints.HORIZONTAL;
 //        c.insets = new Insets(5, 15, 10, 15);
@@ -208,25 +226,38 @@ public class ClientView {
         topInformationPanel.add(portLabel, topC);
 
 
+        this.checkSumArea = new JTextArea();
+        checkSumArea.setEditable(false);
+        checkSumArea.setMaximumSize(new Dimension(mainFrameWidth/3,mainFrameHeight/12));
+        checkSumArea.setBackground(null);
+//        yourPortLabel.setFont(new Font("serif", Font.BOLD, 25));
+        sumC.fill = GridBagConstraints.HORIZONTAL;
+//        c.insets = new Insets(5, 15, 10, 15);
+        sumC.gridwidth = 4;
+        sumC.gridx = 0;
+        sumC.gridy = 0;
+        checkSumBar.add(checkSumArea, sumC);
+
+
 //      Setting information buttons for buttons panel
-        this.reloadHostsList = new JButton("Reload hosts");
+        this.reloadHostsList = new JButton("Reload hosts and files");
         buttonsC.fill = GridBagConstraints.HORIZONTAL;
         reloadHostsList.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/12));
 //        c.insets = new Insets(5, 15, 10, 15);
-        buttonsC.gridwidth = 2;
+        buttonsC.gridwidth = 4;
         buttonsC.gridx = 0;
         buttonsC.gridy = 0;
         buttonsPanel.add(reloadHostsList, buttonsC);
 
-//      Setting information buttons for buttons panel
-        this.reloadFiles = new JButton("Reload files");
-        buttonsC.fill = GridBagConstraints.HORIZONTAL;
-        reloadFiles.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/12));
-//        c.insets = new Insets(5, 15, 10, 15);
-        buttonsC.gridwidth = 2;
-        buttonsC.gridx = 2;
-        buttonsC.gridy = 0;
-        buttonsPanel.add(reloadFiles, buttonsC);
+////      Setting information buttons for buttons panel
+//        this.reloadFiles = new JButton("Reload files");
+//        buttonsC.fill = GridBagConstraints.HORIZONTAL;
+//        reloadFiles.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/12));
+////        c.insets = new Insets(5, 15, 10, 15);
+//        buttonsC.gridwidth = 2;
+//        buttonsC.gridx = 2;
+//        buttonsC.gridy = 0;
+//        buttonsPanel.add(reloadFiles, buttonsC);
 
         this.downloadFileButton = new JButton("Download file");
         buttonsC.fill = GridBagConstraints.HORIZONTAL;
@@ -257,41 +288,6 @@ public class ClientView {
         frame.repaint();
     }
 
-
-
-
-//
-//    // Repaints container with ToDOTasks
-//    public void revaluateToDoList(){
-//        tasksPanel.removeAll();
-//        for (JPanel taskJPanel : tasksToDoJPanelsList) {
-//            taskJPanel.setBorder(BorderFactory.createTitledBorder(
-//                    BorderFactory.createRaisedBevelBorder(), "",
-//                    TitledBorder.CENTER,
-//                    TitledBorder.TOP));
-//            tasksPanel.add(taskJPanel);
-//            taskJPanel.setPreferredSize(blockDimensions);
-//        }
-//
-//        frame.revalidate();
-//        frame.repaint();
-//
-//    }
-//
-//    // Repaints container with DoneTasks
-//    public void revaluateDoneList(){
-//        doneTasksPanel.removeAll();
-//        for (JPanel doneTaskInList : tasksDoneJPanelsList) {
-//            doneTaskInList.setBorder(BorderFactory.createTitledBorder(
-//                    BorderFactory.createRaisedBevelBorder(), "",
-//                    TitledBorder.CENTER,
-//                    TitledBorder.TOP));
-//            doneTasksPanel.add(doneTaskInList);
-//            doneTaskInList.setPreferredSize(blockDimensions);
-//        }
-//
-//        frame.revalidate();
-//        frame.repaint();
 
 //  Adds information about seeders to the list from which later will be displayed seeders list
     public void createSeedersJPanelsArray() {
@@ -335,7 +331,7 @@ public class ClientView {
 //                  Creates JPanel array containign all files for clicked App
                     for (String fileName : seeder.getFilesMap().keySet()) {
 //                      For each file, create JPanel and add it to files JPanel list
-                        filesList.add(createFilePanel(fileName, fileNumber));
+                        filesList.add(createFilePanel(seeder,fileName, fileNumber));
                         fileNumber++;
                     }
 
@@ -377,7 +373,7 @@ public class ClientView {
 
 
     //  Creates separate JPanel for given seeders files
-    public JPanel createFilePanel(String fileName, int fileNumber) {
+    public JPanel createFilePanel(SeederModel seeder, String fileName, int fileNumber) {
 
         GridBagLayout gridBagLayout = new GridBagLayout();
         GridBagConstraints c = new GridBagConstraints();
@@ -399,7 +395,10 @@ public class ClientView {
                     currentlyChosenFileNo = fileNumber;
                     currentlyChoosenFileName = fileName;
                     clickedJPanelVisualFiles();
+                    displayFileControlSum(seeder.getFilesMap().get(fileName));
                     System.out.println("Klinięto lewym przyciskiem na plik");
+
+                    repaintFrame();
                 }
             }
         });
@@ -419,8 +418,6 @@ public class ClientView {
     }
 
 
-
-
 //  Changes borders visual according to the currently clicked JPanel
     public void clickedJPanelVisualSeeders() {
 //      If there was previously changed JPanel
@@ -433,7 +430,12 @@ public class ClientView {
         }
 //      Change border in new JPanel
         seedersJPanelList.get(currentlyChosenSeeder).setBorder(BorderFactory.createLoweredBevelBorder());
-        repaintFrame();
+    }
+
+
+    public void displayFileControlSum(String checkSum) {
+        System.out.println(checkSum);
+        checkSumArea.setText(checkSum);
     }
 
 
@@ -474,6 +476,7 @@ public class ClientView {
         repaintFrame();
     }
 
+
 //  Adds seeders JPanels to the left ScrollPanel
     public void addFilesJPanelListToRightPanel() {
 //      Removes all previous seeders
@@ -493,19 +496,6 @@ public class ClientView {
         }
 
         repaintFrame();
-    }
-
-
-
-// Create required amount of JPanels for each seeder
-// Each JPanel should be clickable
-//Add JPanel to the left panel
-//Repaint
-
-
-//  Adds
-    public void addSeedersInformationToTheLeftJPanel() {
-
     }
 
 
@@ -575,5 +565,13 @@ public class ClientView {
 
     public ArrayList<SeederModel> getSeeders() {
         return seeders;
+    }
+
+    public JTextArea getCheckSumArea() {
+        return checkSumArea;
+    }
+
+    public JPanel getCheckSumBar() {
+        return checkSumBar;
     }
 }

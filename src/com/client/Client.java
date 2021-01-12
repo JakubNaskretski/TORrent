@@ -4,9 +4,12 @@ import com.SeederModel;
 
 import java.io.*;
 import java.net.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Client {
@@ -58,7 +61,7 @@ public class Client {
     private boolean connectedToTracker = false;
 
 //  List of files
-    ArrayList<File> hostAppFiles;
+    ConcurrentHashMap<File, String> hostAppFiles;
 
 //  Locker of the statics within all classes
     static ReentrantLock counterLock = new ReentrantLock(true);
@@ -91,7 +94,8 @@ public class Client {
             ioException.printStackTrace();
         }
 
-        this.hostAppFiles = new ArrayList<>();
+//        this.hostAppFiles = new ArrayList<>();
+        this.hostAppFiles = new ConcurrentHashMap<>();
 
 //      Creates directory to store host files
         this.hostingFilesFolder = "D:\\TORrent_"+currentAppNumber+"\\";
@@ -153,32 +157,51 @@ public class Client {
         return tmpAppNo;
     }
 
+    public String getFileMD5CheckSum(File file) {
+        try {
+            //Use MD5 algorithm
+            MessageDigest md5Digest = MessageDigest.getInstance("MD5");
 
-//  Reads files in folder of app and makes list of files ready to seed
-//  Loads files which may be send
+            System.out.println("Fiel check sum "+getFileChecksum(md5Digest, file));
+
+            //Get the checksum
+            return getFileChecksum(md5Digest, file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+//  Reads files in folder of app and makes map of files on host
     public void loadFilesToShare() {
 
+//          Clears map for reuse of function
             hostAppFiles.clear();
 
             File folder = new File(hostingFilesFolder);
+//          If there is no main app folder
             if (!folder.exists()) {
+//              Create folder
                 folder.mkdir();
             }
+//          Make list out of folder files
             File[] listOfFiles = folder.listFiles();
 
+//      If list of file have been downloaded
         if (listOfFiles != null) {
 
-
+//          For each file in files list
             for (int i = 0; i < listOfFiles.length; i++) {
+//          TODO: verify if this check is needed
 //          If found element is file
                 if (listOfFiles[i].isFile()) {
-//                    System.out.println("File " + listOfFiles[i].getName());
-                    this.hostAppFiles.add(listOfFiles[i]);
+//                    this.hostAppFiles.add(listOfFiles[i]);
+//                  Adds file with its created check sum to map
+                    this.hostAppFiles.put(listOfFiles[i], getFileMD5CheckSum(listOfFiles[i]));
                 }
-//            If found element is folder
-//            else if (listOfFiles[i].isDirectory()) {
-//                System.out.println("Directory " + listOfFiles[i].getName());
-//            }
             }
         } else {
             System.out.println("No files to load in folder");
@@ -229,7 +252,6 @@ public class Client {
 //      Clears seeder array for reuse
         seedersArray.clear();
 
-
             if (connectedToTracker) {
                 try {
 //          Send information about itself in order to add new seeder to the list
@@ -262,7 +284,6 @@ public class Client {
                         List<String> tmp = splitStringToListByDelimiter(element);
 
 //              Writes SeederModel base elements into the tmp variables
-
                         try {
 
                             Integer tmpAppNo = Integer.valueOf(tmp.get(0));
@@ -599,14 +620,18 @@ public class Client {
                 out.flush();
 
 
-//         Iterate over files already in app folder
-                for (File file : hostAppFiles) {
-//              If app already contains file with same name
+//              Iterate over files already in app folder
+                for (File file : hostAppFiles.keySet()) {
+
+//                  If app already contains file with same name
                     if (file.getName().equals(fileName)) {
-//                  Find index of . before downloading file extension
+
+//                      Find index of . before downloading file extension
                         int extensionDotIndex = fileName.lastIndexOf('.');
-//                  Add -copy before extension .
+
+//                      Add -copy before extension .
                         fileName = fileName.substring(0, extensionDotIndex) + "-copy" + fileName.substring(extensionDotIndex);
+
                     }
                 }
 
@@ -745,34 +770,6 @@ public class Client {
 
 
 
-
-
-////  TODO: Verify if it is needed to create socket from the beginning for each connection
-////  Makes connection with particular seeder
-//    public void connectWithSeeder() {
-//        try {
-////      Creates socket
-//        socketForCommAsAClient = new Socket(trackerIp, trackerPort);
-//
-////      Creates output stream buffer for writing data to tracker
-//        outputStream = socketForCommAsAClient.getOutputStream();
-//        out= new BufferedWriter(new OutputStreamWriter(outputStream, "UTF8"));
-//
-////      Creates input stream buffer for getting data from the tracker
-//        inputStream = socketForCommAsAClient.getInputStream();
-//        in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
-//
-////      Prints out information if successfully connected with tracker
-//        System.out.println("Connection established with a tracker");
-//    } catch (IOException e) {
-//        e.printStackTrace();
-//    }
-////      Calls method responsible for communication with tracker
-//        getSeedersList();
-//    };
-
-
-
 // TODO: Should it be in a different thread ?
     public void startSocketForSeeding() {
         try {
@@ -839,13 +836,21 @@ public class Client {
 //                    reader.close();
                     writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"));
 //                  Iterates over file list and prints to the output file names
-                    for (File fileFromCurrentAp : hostAppFiles) {
-                        writer.append(fileFromCurrentAp.getName());
+
+//                    for (Map.Entry<File, String> element : hostAppFiles.entrySet()) {
+                    for (Iterator<File> keys = hostAppFiles.keySet().iterator(); keys.hasNext();) {
+
+                        File key = keys.next();
+                        String val = hostAppFiles.get(key);
+
+//                      Get file name
+                        writer.append(key.getName());
                         writer.append("-");
-//                      Get file size in bytes
-                        writer.append(String.valueOf(fileFromCurrentAp.length()));
+//                      Get file check sum
+                        writer.append(val);
                         writer.append("\n");
                     }
+
                     writer.flush();
                     break;
 
@@ -866,7 +871,7 @@ public class Client {
                     fileName = reader.readLine();
 
 //                  Iterate over files already in app folder
-                    for (File file : hostAppFiles) {
+                    for (File file : hostAppFiles.keySet()) {
 //                      If app already contains file with same name
                         if (file.getName().equals(fileName)) {
 //                          Find index of . before downloading file extension
@@ -1001,6 +1006,38 @@ public class Client {
             for (SeederModel seederModel : seedersArray) {
                 System.out.println( Thread.currentThread().getName()+" "+currentAppNumber+" "+seederModel.toString()+"\n");
             }
+    }
+
+    private static String getFileChecksum(MessageDigest digest, File file) throws IOException
+    {
+        //Get file input stream for reading the file content
+        FileInputStream fis = new FileInputStream(file);
+
+        //Create byte array to read data in chunks
+        byte[] byteArray = new byte[1024];
+        int bytesCount = 0;
+
+        //Read file data and update in message digest
+        while ((bytesCount = fis.read(byteArray)) != -1) {
+            digest.update(byteArray, 0, bytesCount);
+        };
+
+        //close the stream; We don't need it now.
+        fis.close();
+
+        //Get the hash's bytes
+        byte[] bytes = digest.digest();
+
+        //This bytes[] has bytes in decimal format;
+        //Convert it to hexadecimal format
+        StringBuilder sb = new StringBuilder();
+        for(int i=0; i< bytes.length ;i++)
+        {
+            sb.append(Integer.toString((bytes[i] & 0xff) + 0x100, 16).substring(1));
+        }
+
+        //return complete hash
+        return sb.toString();
     }
 
 }

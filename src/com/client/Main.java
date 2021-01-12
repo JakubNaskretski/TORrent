@@ -96,6 +96,7 @@ public class Main {
             clientView.createSeedersJPanelsArray();
             clientView.addSeedersJPanelListToLeftPanel();
 
+
             clientView.getReloadHostsList().addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
@@ -103,6 +104,10 @@ public class Main {
                     client.askSeedersForFilesList();
 
                     clientView.setSeeders(client.getSeedersArray());
+
+                    clientView.getRightFilesPanel().removeAll();
+                    clientView.getCheckSumArea().setText("");
+
                     clientView.createSeedersJPanelsArray();
                     clientView.addSeedersJPanelListToLeftPanel();
 
