@@ -28,6 +28,7 @@ public class ClientView {
     private JLabel ipLabel;
     private JLabel yourPortLabel;
     private JLabel portLabel;
+    private JLabel downloadProgressLabel;
     private JTextArea checkSumArea;
     private JButton reloadHostsList, reloadFiles, sendFileButton, downloadFileButton;
 
@@ -52,12 +53,12 @@ public class ClientView {
 
 //      Create frame
         this.frame = new JFrame();
-        mainFrameWidth = screenWidth / 5;
-        mainFrameHeight = screenHeight / 3;
+        mainFrameWidth = screenWidth / 3;
+        mainFrameHeight = screenHeight / 2;
 
         this.mainFrameDimension = new Dimension(mainFrameWidth, mainFrameHeight);
         frame.setSize(mainFrameDimension);
-        frame.setResizable(false);
+        frame.setResizable(true);
         frame.setLocation(((screenWidth / 2) - (screenWidth / 4)), ((screenHeight / 2) - (screenHeight / 4)));
         frame.setLocationRelativeTo(null);
 
@@ -101,8 +102,6 @@ public class ClientView {
         rightFilesPanel.setLayout(new BoxLayout(rightFilesPanel, BoxLayout.Y_AXIS));
         rightFilesScrollPanel = new JScrollPane(rightFilesPanel);
         rightFilesScrollPanel.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/3));
-//      Set scrolling unit
-//        rightFilesScrollPanel.getVerticalScrollBar().setUnitIncrement((int) blockDimensions.getHeight());
         rightFilesScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
 //      Add right panel to the main
@@ -118,9 +117,7 @@ public class ClientView {
         leftSeedersPanel.setLayout(new BoxLayout(leftSeedersPanel, BoxLayout.Y_AXIS));
         leftSeedersScrollPanel = new JScrollPane(leftSeedersPanel);
         leftSeedersScrollPanel.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/3));
-//      Set scrolling unit
-//        leftSeedersScrollPanel.getVerticalScrollBar().setUnitIncrement(3);
-//        leftSeedersScrollPanel.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
 
 //      Add left panel to the main
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -142,7 +139,6 @@ public class ClientView {
         c.gridy = 3;
         mainPanel.add(checkSumBar, c);
 
-
 //      Creating buttons panel
         buttonsPanel = new JPanel(new GridBagLayout());
         GridBagConstraints buttonsC = new GridBagConstraints();
@@ -157,7 +153,9 @@ public class ClientView {
 //      Creating progress bar panel
         progressBarPanel = new JPanel(new GridBagLayout());
         progressBarPanel.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/12));
+        GridBagConstraints progressC = new GridBagConstraints();
 
+//      TODO: Make visual representation of downloading file
 //      Add progress bar panel to the main
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridwidth = 4;
@@ -278,6 +276,17 @@ public class ClientView {
         buttonsC.gridy = 1;
         buttonsPanel.add(sendFileButton, buttonsC);
 
+//      Setting information buttons for buttons panel
+        this.downloadProgressLabel = new JLabel("% of file download");
+        buttonsC.fill = GridBagConstraints.HORIZONTAL;
+//        sendFileButton.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/12));
+        progressC.gridwidth = 4;
+        progressC.gridx = 0;
+        progressC.gridy = 0;
+        progressBarPanel.add(downloadProgressLabel, progressC);
+
+
+
 
 //      Adds main panel to the frame
         frame.add(mainPanel);
@@ -331,7 +340,7 @@ public class ClientView {
 //                  Creates JPanel array containign all files for clicked App
                     for (String fileName : seeder.getFilesMap().keySet()) {
 //                      For each file, create JPanel and add it to files JPanel list
-                        filesList.add(createFilePanel(seeder,fileName, fileNumber));
+                        filesList.add(createFilePanel(seeder, fileName, fileNumber));
                         fileNumber++;
                     }
 
@@ -499,6 +508,17 @@ public class ClientView {
     }
 
 
+    public void changeDownloadFileLabel(String text) {
+        downloadProgressLabel.setText(text);
+        repaintFrame();
+    }
+
+    public void createPopUpWindow(String text) {
+        JOptionPane.showMessageDialog(frame,
+                text);
+    }
+
+
     public JFrame getFrame() {
         return frame;
     }
@@ -573,5 +593,9 @@ public class ClientView {
 
     public JPanel getCheckSumBar() {
         return checkSumBar;
+    }
+
+    public JLabel getDownloadProgressLabel() {
+        return downloadProgressLabel;
     }
 }

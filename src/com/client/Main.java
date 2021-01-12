@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 
 public class Main {
+
     public static void main(String[] args) {
 
         ClientView clientView1 = new ClientView();
@@ -18,60 +19,6 @@ public class Main {
         startNewClient(clientView2);
         startNewClient(clientView3);
 
-
-//        Thread t1 = new Thread(() -> {
-//            System.out.println("Starting Thread from main: "+Thread.currentThread().getName());
-//            Client client1 = new Client();
-////            client1.connectWithTracker();
-//
-//            clientView1.getAppNumberLabel().setText(String.valueOf(client1.getCurrentAppNumber()));
-//            clientView1.getIpLabel().setText(client1.getHostingIp());
-//            clientView1.getPortLabel().setText(String.valueOf(client1.getCurrentAppHostingPort()));
-//
-//            clientView1.getReloadHostsList().addActionListener(new ActionListener() {
-//                @Override
-//                public void actionPerformed(ActionEvent e) {
-//                    client1.connectWithTracker();
-//                }
-//            });
-//
-//        });
-//
-//        Thread t2 = new Thread(() -> {
-//            System.out.println("Starting Thread from main: "+Thread.currentThread().getName());
-//            Client client2 = new Client();
-////            client2.connectWithTracker();
-//
-//            clientView2.getAppNumberLabel().setText(String.valueOf(client2.getCurrentAppNumber()));
-//            clientView2.getIpLabel().setText(client2.getHostingIp());
-//            clientView2.getPortLabel().setText(String.valueOf(client2.getCurrentAppHostingPort()));
-//            clientView2.setSeeders(client2.getSeedersArray());
-//            clientView2.createSeedersJPanelsArray();
-//            clientView2.addSeedersJPanelListToLeftPanel();
-//
-//
-//        });
-//
-//        Thread t3 = new Thread(() -> {
-//            System.out.println("Starting Thread from main: "+Thread.currentThread().getName());
-//            Client client3 = new Client();
-//
-//            clientView3.getAppNumberLabel().setText(String.valueOf(client3.getCurrentAppNumber()));
-//            clientView3.getIpLabel().setText(client3.getHostingIp());
-//            clientView3.getPortLabel().setText(String.valueOf(client3.getCurrentAppHostingPort()));
-//            clientView3.setSeeders(client3.getSeedersArray());
-//            clientView3.createSeedersJPanelsArray();
-//            clientView3.addSeedersJPanelListToLeftPanel();
-//
-////            client2.askSeedersForFilesList();
-////            client2.printSeedersFiles();
-//        });
-//
-//        t1.start();
-//        t2.start();
-//        t3.start();
-
-
     }
 
     public void addSeedersToJPanel(ClientView clientView, Client client) {
@@ -81,7 +28,6 @@ public class Main {
     }
 
 
-
     public static void startNewClient(ClientView clientView) {
 
         new Thread(() -> {
@@ -89,7 +35,7 @@ public class Main {
             Client client = new Client();
 
             clientView.getAppNumberLabel().setText(String.valueOf(client.getCurrentAppNumber()));
-            clientView.getIpLabel().setText(client.getHostingIp());
+            clientView.getIpLabel().setText(client.getCurrentAppHostingIp());
             clientView.getPortLabel().setText(String.valueOf(client.getCurrentAppHostingPort()));
 
             clientView.setSeeders(client.getSeedersArray());
@@ -100,6 +46,9 @@ public class Main {
             clientView.getReloadHostsList().addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
+//                    Makes reload lagg app
+//                    client.loadFilesToShare();
+
                     client.connectWithTracker();
                     client.askSeedersForFilesList();
 
@@ -110,7 +59,6 @@ public class Main {
 
                     clientView.createSeedersJPanelsArray();
                     clientView.addSeedersJPanelListToLeftPanel();
-
                 }
             });
 
@@ -122,13 +70,14 @@ public class Main {
 //                    TODO: validation of input
 //                  Client application asks the seeder who owns currently choosen file for download file
                     client.askSeederForFileToDownload(
+                            clientView,
 //                          Get currently choosen (clicked) file name
                             clientView.getCurrentlyChoosenFileName(),
 //                          Get from seeders list (from view), currently selected seeder ip
                             clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederIp(),
 //                          And port
-                            clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederPort());
-
+                            clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederPort()
+                    );
                 }
             });
 

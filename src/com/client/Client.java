@@ -1,6 +1,7 @@
 package com.client;
 
 import com.SeederModel;
+import com.client.view.ClientView;
 
 import java.io.*;
 import java.net.*;
@@ -26,15 +27,11 @@ public class Client {
 //    Pomiar czasu pozostałego do końca przesyłania plik (1 pkt.). ten punkt robimy jak poprzednie są zrobione  to są punkty bonusowe.
 
 
-//  Default app number increasing for each instance of app created
-//    private static int applicationNumber = 0;
+//  Default app number
     private int currentAppNumber;
 
 //  Temporary app port before connecting to the tracker
     private int currentAppTmpPort;
-
-////  Default app hosting port
-//    private static int hostingPort = 10000;
 
 //  Current app hosting port
     private int currentAppHostingPort;
@@ -46,10 +43,9 @@ public class Client {
     private Socket socketForCommAsAClient;
 
 //  default ip
-    private String hostingIp = "0.0.0.0";
+    private String currentAppHostingIp = "0.0.0.0";
 
 //  Tracker ip
-//    TODO: Change for correct data
     private String trackerIp = "0.0.0.0";
 
 //  Tracker port number
@@ -79,27 +75,32 @@ public class Client {
     private BufferedReader in;
     private String receivedData, dirToSaveFile;
     private boolean stop;
-//    private int receiverPort;
-
 
 //  Constructor
     public Client() {
 
+//      Gets host app ip out
+        try {
+             this.currentAppHostingIp = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
 
+//      App number and port
         this.currentAppNumber = 0;
         this.currentAppHostingPort = 0;
 
 //      After creating instance of a class, give it tmp number and port
         this.currentAppTmpPort = generateRandomPortNo();
 
-//      Starts socket for first connection with tracker for current app
+//      Starts socket for first connection with tracker
         try {
             this.currentAppHostingSocket = new ServerSocket(currentAppTmpPort);
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
 
-//        this.hostAppFiles = new ArrayList<>();
+//      Creates ConcurrentHashMap in to store app files ready to share
         this.hostAppFiles = new ConcurrentHashMap<>();
 
 //      Creates Array for storing seeders list
@@ -108,65 +109,44 @@ public class Client {
 //      Tries to connect with the tracker in order to get information about seeders
         connectWithTracker();
 
+//      Creates new socket after receiving data from tracker
         try {
             this.currentAppHostingSocket = new ServerSocket(currentAppHostingPort);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-//      Creates directory to store host files
+//      Creates directory to store files
         this.hostingFilesFolder = "D:\\TORrent_"+currentAppNumber+"\\";
-//        this.hostingFilesFolder = "C:\\Users\\jnaskretski\\Desktop\\TORrent\\"+currentAppNumber+"\\";
 
 //      Starts listening for other seeders
             new Thread(() -> {
                 startSocketForSeeding();
             }).start();
 
-//      After receiving list of seeders from the tracker and starting hosting
+//      Loads files to share
         loadFilesToShare();
 
-            askSeedersForFilesList();
+//      Asks seeders for files list
+        askSeedersForFilesList();
     }
 
-//  TODO: isn't it to complicated for current project
+
+    /**
+     * Generates random port for newly created app
+     */
     public int generateRandomPortNo() {
-//            Integer[] arr = new Integer[55535];
-//            for (int i = 10001; i < arr.length; i++) {
-//                arr[i] = i;
-//            }
-//            Collections.shuffle(Arrays.asList(arr));
-//            return arr[1];
         return ThreadLocalRandom.current().nextInt(10001, 65535 + 1);
     }
 
-////  Increments App counter and Port number
-//    static int incrementAppNo(){
-//        counterLock.lock();
-//
-//        int tmpAppNo = 0;
-//
-//        try{
-//
-//            applicationNumber++;
-//
-//            tmpAppNo = applicationNumber;
-//
-//            System.out.println(Thread.currentThread().getName() + ": " + applicationNumber);
-//
-//        }finally{
-//            counterLock.unlock();
-//        }
-//        return tmpAppNo;
-//    }
 
+    /**
+     * Returns checksum for given file
+     */
     public String getFileMD5CheckSum(File file) {
         try {
             //Use MD5 algorithm
             MessageDigest md5Digest = MessageDigest.getInstance("MD5");
-
-            System.out.println("Fiel check sum "+getFileChecksum(md5Digest, file));
-
             //Get the checksum
             return getFileChecksum(md5Digest, file);
         } catch (IOException e) {
@@ -178,7 +158,9 @@ public class Client {
     }
 
 
-//  Reads files in folder of app and makes map of files on host
+    /**
+     * Reads files in folder of app and makes map from it
+     */
     public void loadFilesToShare() {
 
 //          Clears map for reuse of function
@@ -211,13 +193,18 @@ public class Client {
         }
     }
 
-//  Connects current app with tracker
+
+    /**
+     * Connects current app with the tracker
+     */
     public void connectWithTracker() {
 
+//      Locks the thread
         counterLock.lock();
 
         try {
             try {
+
 //          Creates socket to connect with tracker
                 this.socketForCommAsAClient = new Socket(trackerIp, trackerPort);
 
@@ -229,10 +216,7 @@ public class Client {
                 inputStream = socketForCommAsAClient.getInputStream();
                 in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
 
-//          Prints out information if successfully connected with tracker
-//            System.out.println("Connection established with Tracker by app: "+Thread.currentThread().getName()+" "+currentAppNumber);
-
-//          Set up connection flag
+//              Set up connection flag
                 connectedToTracker = true;
 
             } catch (ConnectException e) {
@@ -241,15 +225,22 @@ public class Client {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-//      Calls method responsible for communication with tracker
+
+//          Calls method responsible for communication with tracker
             getSeedersList();
+
         } finally {
+//          Unlocks the thread
             counterLock.unlock();
         }
     }
 
 
-//  Asks for seeders list from tracker (if connected) and gives its own data to update list on tracker
+    /**
+     * Sends app data to the tracker
+     * If does not have yet app number, receives new app number according to the tracker
+     * Receives list of the seeders from the tracker
+     */
     private void getSeedersList() {
 
 //      Clears seeder array for reuse
@@ -257,9 +248,10 @@ public class Client {
 
             if (connectedToTracker) {
                 try {
-//          Send information about itself in order to add new seeder to the list
+
+//                  Send information about itself in order to add new seeder to the list
                     out.append(currentAppNumber + "\n");
-                    out.append(hostingIp + "\n");
+                    out.append(currentAppHostingIp + "\n");
                     out.append(currentAppHostingPort + "\n");
                     out.append(hashCode() + "\n");
                     out.flush();
@@ -269,19 +261,19 @@ public class Client {
                     StringBuffer strB = new StringBuffer(receivedData);
                     String currentLine;
 
-
+//                  If app does not have number yet
                     if (currentAppNumber == 0) {
 
-//                  While output stream on tracker open and sending data, read data
-
+//                      Read line from tracker which suppose to be new number
                         int receivedNewAppNo = Integer.valueOf(in.readLine());
 
+//                      Assign new number and port to the variables
                         this.currentAppNumber = receivedNewAppNo;
                         this.currentAppHostingPort = 10000+currentAppNumber;
 
                     }
 
-//          While output stream on tracker open and sending data, read data
+//                  While output stream on tracker open and sending data, read data
                     while ((currentLine = in.readLine()) != null) {
                         strB.append(currentLine);
                         strB.append("\n");
@@ -289,16 +281,16 @@ public class Client {
 
                     receivedData = strB.toString();
 
-//          Splits received seeders data into a list
+//                  Splits received seeders data into a list
                     List<String> receivedSeedersList = splitStringToListByNLine(receivedData);
 
-//          For elements in list, split list and add seeders information into the list of SeederModels
-//                if (receivedSeedersList.isEmpty()) {
+//                  For elements in list, split list and add seeders information into the list of SeederModels
                     for (String element : receivedSeedersList) {
-//              Creates tmp list containing base elements of SeederModel
+
+//                      Creates tmp list containing base elements of SeederModel
                         List<String> tmp = splitStringToListByDelimiter(element);
 
-//              Writes SeederModel base elements into the tmp variables
+//                      Writes SeederModel base elements into the tmp variables
                         try {
 
                             Integer tmpAppNo = Integer.valueOf(tmp.get(0));
@@ -306,43 +298,30 @@ public class Client {
                             Integer tmpHostPort = Integer.valueOf(tmp.get(2));
                             Integer tmpHostHash = Integer.valueOf(tmp.get(3));
 
-                            //              Checks if client is in list with seeders
-//                            boolean containsSeeder = false;
-
+//                              Compares tmp variables with seeders array to find if there are dupplicates
                                 for (SeederModel seederModel : seedersArray) {
-                                    if ((seederModel.getSeederAppNumber().equals(tmpAppNo) && seederModel.getSeederIp().equals(tmpHostIp) && seederModel.getSeederPort().equals(tmpHostPort))) {
-//                                        containsSeeder = true;
-//                                      If found in list no need to continue searching
+                                    if ((seederModel.getSeederAppNumber().equals(tmpAppNo) &&
+                                            seederModel.getSeederIp().equals(tmpHostIp) &&
+                                            seederModel.getSeederPort().equals(tmpHostPort))) {
+
+//                                      Than skip that record
                                         continue;
                                     }
                                 }
 
+//                              If received data from tracker is about the current app
                                 if (tmpAppNo == currentAppNumber) {
-//                                    containsSeeder = true;
-//                                  If found in list no need to continue searching
+
+//                                  Than skip that record
                                     continue;
                                 }
 
-//                  TODO: Fix null data received on first connection with tracker
-//                  If not, add new object with seeder data to the list
-//                                if (containsSeeder == false) {
-//                      If element is not the same as current app
-//                            if (!tmpAppNo.equals(Integer.valueOf(currentAppNumber))) {
-//              Creates SeederModel as a store of possible to connect seeders and places them into array
-                                    seedersArray.add(new SeederModel(tmpAppNo, tmpHostIp, tmpHostPort, tmpHostHash));
-//                            }
-//                                }
+//                              If there is no such record in seeders array, create new out of received data
+                                seedersArray.add(new SeederModel(tmpAppNo, tmpHostIp, tmpHostPort, tmpHostHash));
+
                         } catch (NumberFormatException E) {
                             System.out.println("No data of seeders have been downloaded from tracker");
                         }
-//                }
-
-//          Print out content of the seeders array - control
-//                        System.out.println("Printing seeders from app: " + currentAppNumber);
-                        for (SeederModel seederModel : seedersArray) {
-                            System.out.println(Thread.currentThread().getName()+" "+seederModel.toString());
-                        }
-
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -354,163 +333,40 @@ public class Client {
                         }
                         if (in != null) {
                             in.close();
-//                            System.out.println("Dissconnecting from socket - app: " + currentAppNumber + "\n");
                             socketForCommAsAClient.close();
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
                 }
-
-
             } else {
                 System.out.println("Cannot get seeders list without connection to tracker on the app: " + currentAppNumber);
             }
     }
 
-//  Splits received data by new lines into the List
+
+    /**
+     * Splits received data by new lines into the List
+     */
     public List<String> splitStringToListByNLine(String seedersData){
         return Arrays.asList(seedersData.split("\\s*\\n\\s*"));
     }
 
-//  Splits received data in the list into the new list by "-"
+
+//    TODO: Use new line to separate data
+    /**
+     * Splits received data in the list into the new list by "---"
+     * Used "---" instead of "-" because it is less likely to appear in the file name
+     */
     public List<String> splitStringToListByDelimiter(String seedersList){
-        return Arrays.asList(seedersList.split("\\s*-\\s*"));
-    }
-
-////  Downloads data from seeder
-//    public void downloadFileFromSeeder(String dirToSaveFile, int receiverPort) {
-////      Sets directory to save received file
-//        setDirToSaveFile(dirToSaveFile);
-////      Sets port of the seeder
-//        setReceiverPort(receiverPort);
-////      Starts downloading method
-//        downloadFileThread.start();
-//    }
-
-
-//  Sends file
-    public void seedFileAsHost(String fileToSendName) {
-//      Sets name of the file to send
-        setFileToSendName(fileToSendName);
-//      Starts sending file meth od
-        sendFileThread.start();
+        return Arrays.asList(seedersList.split("\\s*---\\s*"));
     }
 
 
-//  Creates downloading file thread for later start
-    Thread downloadFileThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-            Socket socket = null;
-            try {
-//              Creates socket to receive connection from file sender
-                ServerSocket ss = new ServerSocket(currentAppHostingPort);
-                do {
-                    socket = ss.accept();
-
-                    // public Socket accept() throws
-                    // IOException listens for and accepts connections to this socket. This method blocks until it is connected.
-//                    System.out.println("Create a socket link");
-                    DataInputStream inputStream = new DataInputStream(
-                            new BufferedInputStream(socket.getInputStream()));
-
-                    // Local save path, the file name will automatically inherit from the server side.
-                    int bufferSize = 8192;
-                    byte[] buf = new byte[bufferSize];
-                    long passedlen = 0;
-                    long len = 0;
-
-                    // Get the file name
-                    String file = dirToSaveFile + inputStream.readUTF();
-                    DataOutputStream fileOut = new DataOutputStream(
-                            new BufferedOutputStream(new FileOutputStream(file)));
-                    len = inputStream.readLong();
-
-                    System.out.println("The length of the file is:" + len + "\n");
-                    System.out.println("Start receiving files!" + "\n");
-
-                    while (true) {
-                        int read = 0;
-                        if (inputStream != null) {
-                            read = inputStream.read(buf);
-                        }
-                        passedlen += read;
-                        if (read == -1) {
-                            break;
-                        }
-                        // The following progress bar is made for the prograssBar of the graphical interface. If you are typing a file, you may repeat the same percentage.
-                        System.out.println("File Received" + (passedlen * 100 / len)
-                                + "%\n");
-                        fileOut.write(buf, 0, read);
-                    }
-                    System.out.println("Receive completed, file saved as" + file + "\n");
-
-                    fileOut.close();
-                } while (!stop);
-            } catch (Exception e) {
-                System.out.println("Receive Message Error" + "\n");
-                e.printStackTrace();
-                return;
-            }
-        }
-    });
-
-
-//    ==================
-
-//  Creates sending file thread for later start
-    Thread sendFileThread = new Thread(new Runnable() {
-        @Override
-        public void run() {
-            Socket s = null;
-            try {
-//              Creates socket to send file
-                s = new Socket(hostingIp, currentAppHostingPort);
-
-                // Select the file to transfer
-                File fi = new File(hostingFilesFolder + fileToSendName);
-                System.out.println("file length:" + (int) fi.length());
-
-                DataInputStream fis = new DataInputStream(new FileInputStream(hostingFilesFolder + fileToSendName));
-                DataOutputStream ps = new DataOutputStream(s.getOutputStream());
-                ps.writeUTF(fi.getName());
-                ps.flush();
-                ps.writeLong((long) fi.length());
-                ps.flush();
-
-                int bufferSize = 8192;
-                byte[] buf = new byte[bufferSize];
-
-                while (true) {
-                    int read = 0;
-                    if (fis != null) {
-                        read = fis.read(buf);
-                    }
-
-                    if (read == -1) {
-                        break;
-                    }
-                    ps.write(buf, 0, read);
-                }
-                ps.flush();
-                // Note that the socket link is closed, otherwise the client will wait for the server data to come over.
-                // Until the socket times out, the data is incomplete.
-                fis.close();
-                ps.close();
-                s.close();
-                System.out.println("File Transfer Complete");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    });
-
-
-//    ==================
-
-
-//  Asks each seeder in array for list of files to download and updates files in each seeder
+    /**
+     * Asks each seeder in array for list of files to download
+     * Updates file list in each seeder in array wit hreceived data
+     */
     public void askSeedersForFilesList() {
 
             for (SeederModel seederModel : seedersArray) {
@@ -520,27 +376,26 @@ public class Client {
                     String tmpSeederIp = seederModel.getSeederIp();
                     Integer tmpSeederPort = seederModel.getSeederPort();
 
-//              Creates socket to connect with seeder
+//                  Creates socket to connect with seeder
                     this.socketForCommAsAClient = new Socket(tmpSeederIp, tmpSeederPort.intValue());
 
-                    //          Creates output stream buffer for writing data to seeder
+//                  Creates output stream buffer for writing data to seeder
                     outputStream = socketForCommAsAClient.getOutputStream();
                     out = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF8"));
 
-//          Creates input stream buffer for getting data from the seeder
+//                  Creates input stream buffer for getting data from the seeder
                     inputStream = socketForCommAsAClient.getInputStream();
                     in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
 
-//              Prints out information if successfully connected with tracker
-//                    System.out.println("Connection established with a seeder " + seederModel.getSeederAppNumber());
 
-//              Sends request to the other seeder
+//                  Sends request to the other seeder
                     out.append("LIST");
                     out.append("\n");
                     out.flush();
 
                     receivedData = new String();
 
+//                  Creates string buf for easier data concat
                     StringBuffer strB = new StringBuffer(receivedData);
 
                     String currentLine;
@@ -555,13 +410,13 @@ public class Client {
 //                  Prevents doing next lines if received filesData is empty
                     if (!receivedData.isEmpty()) {
 
-//              Splits received seeders data into a list
+//                      Splits received seeders data into a list
                         List<String> receivedFilesOnSeederList = splitStringToListByNLine(receivedData);
 
-//              For elements in list, split list and add seeders information into the list of SeederModels
+//                      For elements in list, split list and add seeders information into the list of SeederModels
                         for (String element : receivedFilesOnSeederList) {
 
-//              Creates tmp list containing base elements of SeederModel
+//                          Creates tmp list containing base elements of SeederModel
                             List<String> tmp = splitStringToListByDelimiter(element);
 
                             String tmpFileName = tmp.get(0);
@@ -595,9 +450,11 @@ public class Client {
 
 
 
-
-//  Asks each seeder in array for list of files to download and updates files in each seeder
-    public void askSeederForFileToDownload(String fileName, String host, Integer port) {
+    /**
+     * Asks particular seeder for file to download
+     * Updates files to download in app
+     */
+    public void askSeederForFileToDownload(ClientView view, String fileName, String host, Integer port) {
 
         try {
             if (fileName != null) {
@@ -605,12 +462,11 @@ public class Client {
 //              Creates socket to connect with seeder
                 this.socketForCommAsAClient = new Socket(host, Integer.valueOf(port));
 
-
 //              Creates output stream buffer for writing data to seeder
                 outputStream = socketForCommAsAClient.getOutputStream();
                 out = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF8"));
 
-//          Creates input stream buffer for getting data from the seeder
+//              Creates input stream buffer for getting data from the seeder
                 inputStream = socketForCommAsAClient.getInputStream();
                 in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
 
@@ -623,17 +479,15 @@ public class Client {
                 long passedlen = 0;
                 long len = 0;
 
-
 //              Sends request to the other seeder
                 out.append("SEND");
                 out.append("\n");
                 out.flush();
 
-//              Sending file name to the other seeder
+//              Sending name of the file to download to the other seeder
                 out.append(fileName);
                 out.append("\n");
                 out.flush();
-
 
 //              Iterate over files already in app folder
                 for (File file : hostAppFiles.keySet()) {
@@ -644,8 +498,8 @@ public class Client {
 //                      Find index of . before downloading file extension
                         int extensionDotIndex = fileName.lastIndexOf('.');
 
-//                      Add -copy before extension .
-                        fileName = fileName.substring(0, extensionDotIndex) + "-copy" + fileName.substring(extensionDotIndex);
+//                      Add copy before extension .
+                        fileName = fileName.substring(0, extensionDotIndex) + "copy" + fileName.substring(extensionDotIndex);
 
                     }
                 }
@@ -656,6 +510,7 @@ public class Client {
                 DataOutputStream fileOut = new DataOutputStream(
                         new BufferedOutputStream(new FileOutputStream(file)));
 
+//              Gets information about file length
                 len = inputStream.readLong();
 
                 while (true) {
@@ -667,15 +522,24 @@ public class Client {
                     if (read == -1) {
                         break;
                     }
-                    // The following progress bar is made for the prograssBar of the graphical interface. If you are typing a file, you may repeat the same percentage.
-                    System.out.println("File Received" + (passedlen * 100 / len)
-                            + "%\n");
+
+//                  File progress bar
+                    view.changeDownloadFileLabel("Downloaded " + (passedlen * 100 / len) + "% of file");
+
+//                    wait(1);
+
                     fileOut.write(buf, 0, read);
+
                 }
+
+                view.createPopUpWindow("File successfully downloaded");
                 System.out.println("Receive completed, file saved as" + file + "\n");
+
+                view.changeDownloadFileLabel("% of downloaded file");
 
                 fileOut.close();
 
+//              Refresh file list to download from app
                 loadFilesToShare();
             }
 
@@ -687,7 +551,7 @@ public class Client {
             fileNotFoundException.printStackTrace();
         } catch (IOException ioException) {
             ioException.printStackTrace();
-        } finally {
+        }finally {
             try {
                 if (in != null) {
                     in.close();
@@ -860,7 +724,7 @@ public class Client {
 
 //                      Get file name
                         writer.append(key.getName());
-                        writer.append("-");
+                        writer.append("---");
 //                      Get file check sum
                         writer.append(val);
                         writer.append("\n");
@@ -964,6 +828,8 @@ public class Client {
                     break;
             }
 
+        } catch (FileNotFoundException e) {
+            System.out.println("File have not been found");
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -992,8 +858,8 @@ public class Client {
         this.fileToSendName = fileToSendName;
     }
 
-    public String getHostingIp() {
-        return hostingIp;
+    public String getCurrentAppHostingIp() {
+        return currentAppHostingIp;
     }
 
     public String getHostingFilesFolder() {

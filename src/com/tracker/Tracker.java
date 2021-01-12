@@ -116,11 +116,11 @@ static ReentrantLock counterLock = new ReentrantLock(true);
 //              Retrieves list of seeders (before appending new one to the list)
                 for (SeederModel element : seedersList) {
                     writer.append(String.valueOf(element.getSeederAppNumber()));
-                    writer.append("-");
+                    writer.append("---");
                     writer.append(String.valueOf(element.getSeederIp()));
-                    writer.append("-");
+                    writer.append("---");
                     writer.append(String.valueOf(element.getSeederPort()));
-                    writer.append("-");
+                    writer.append("---");
                     writer.append(String.valueOf(element.getSeederHash()));
                     writer.append("\n");
 
