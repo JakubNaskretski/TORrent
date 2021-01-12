@@ -10,6 +10,7 @@ import java.util.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Client {
@@ -26,11 +27,14 @@ public class Client {
 
 
 //  Default app number increasing for each instance of app created
-    private static int applicationNumber = 0;
+//    private static int applicationNumber = 0;
     private int currentAppNumber;
 
-//  Default app hosting port
-    private static int hostingPort = 10000;
+//  Temporary app port before connecting to the tracker
+    private int currentAppTmpPort;
+
+////  Default app hosting port
+//    private static int hostingPort = 10000;
 
 //  Current app hosting port
     private int currentAppHostingPort;
@@ -79,17 +83,18 @@ public class Client {
 
 
 //  Constructor
-    public Client(){
+    public Client() {
 
 
-//      After creating instance of a class, give it new number and port
+        this.currentAppNumber = 0;
+        this.currentAppHostingPort = 0;
 
-        this.currentAppNumber = incrementAppNo();
-        this.currentAppHostingPort = 10000+currentAppNumber;
+//      After creating instance of a class, give it tmp number and port
+        this.currentAppTmpPort = generateRandomPortNo();
 
-//      Starts socket for current app
+//      Starts socket for first connection with tracker for current app
         try {
-            this.currentAppHostingSocket = new ServerSocket(currentAppHostingPort);
+            this.currentAppHostingSocket = new ServerSocket(currentAppTmpPort);
         } catch (IOException ioException) {
             ioException.printStackTrace();
         }
@@ -97,28 +102,21 @@ public class Client {
 //        this.hostAppFiles = new ArrayList<>();
         this.hostAppFiles = new ConcurrentHashMap<>();
 
-//      Creates directory to store host files
-        this.hostingFilesFolder = "D:\\TORrent_"+currentAppNumber+"\\";
-//        this.hostingFilesFolder = "C:\\Users\\jnaskretski\\Desktop\\TORrent\\"+currentAppNumber+"\\";
-
-
-
 //      Creates Array for storing seeders list
         seedersArray = new ArrayList<SeederModel>();
 
-
 //      Tries to connect with the tracker in order to get information about seeders
-//        new Thread(() -> {
-//            while (true) {
-                connectWithTracker();
-//                System.out.println("loop");
-//                try {
-//                    Thread.sleep(4000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }).start();
+        connectWithTracker();
+
+        try {
+            this.currentAppHostingSocket = new ServerSocket(currentAppHostingPort);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+//      Creates directory to store host files
+        this.hostingFilesFolder = "D:\\TORrent_"+currentAppNumber+"\\";
+//        this.hostingFilesFolder = "C:\\Users\\jnaskretski\\Desktop\\TORrent\\"+currentAppNumber+"\\";
 
 //      Starts listening for other seeders
             new Thread(() -> {
@@ -126,36 +124,41 @@ public class Client {
             }).start();
 
 //      After receiving list of seeders from the tracker and starting hosting
-//      Load files from the folders
         loadFilesToShare();
-//      Ask all other seeders for files
-//        new Thread(() -> {
+
             askSeedersForFilesList();
-//        }).start();
-//      print information about seeders with files
-//            printSeedersFiles();
-
-    };
-
-//  Increments App counter and Port number
-    static int incrementAppNo(){
-        counterLock.lock();
-
-        int tmpAppNo = 0;
-
-        try{
-
-            applicationNumber++;
-
-            tmpAppNo = applicationNumber;
-
-            System.out.println(Thread.currentThread().getName() + ": " + applicationNumber);
-
-        }finally{
-            counterLock.unlock();
-        }
-        return tmpAppNo;
     }
+
+//  TODO: isn't it to complicated for current project
+    public int generateRandomPortNo() {
+//            Integer[] arr = new Integer[55535];
+//            for (int i = 10001; i < arr.length; i++) {
+//                arr[i] = i;
+//            }
+//            Collections.shuffle(Arrays.asList(arr));
+//            return arr[1];
+        return ThreadLocalRandom.current().nextInt(10001, 65535 + 1);
+    }
+
+////  Increments App counter and Port number
+//    static int incrementAppNo(){
+//        counterLock.lock();
+//
+//        int tmpAppNo = 0;
+//
+//        try{
+//
+//            applicationNumber++;
+//
+//            tmpAppNo = applicationNumber;
+//
+//            System.out.println(Thread.currentThread().getName() + ": " + applicationNumber);
+//
+//        }finally{
+//            counterLock.unlock();
+//        }
+//        return tmpAppNo;
+//    }
 
     public String getFileMD5CheckSum(File file) {
         try {
@@ -261,10 +264,22 @@ public class Client {
                     out.append(hashCode() + "\n");
                     out.flush();
 
-//          Read list of seeders
+//                  Read list of seeders
                     receivedData = new String();
                     StringBuffer strB = new StringBuffer(receivedData);
                     String currentLine;
+
+
+                    if (currentAppNumber == 0) {
+
+//                  While output stream on tracker open and sending data, read data
+
+                        int receivedNewAppNo = Integer.valueOf(in.readLine());
+
+                        this.currentAppNumber = receivedNewAppNo;
+                        this.currentAppHostingPort = 10000+currentAppNumber;
+
+                    }
 
 //          While output stream on tracker open and sending data, read data
                     while ((currentLine = in.readLine()) != null) {
@@ -451,7 +466,7 @@ public class Client {
             Socket s = null;
             try {
 //              Creates socket to send file
-                s = new Socket(hostingIp, hostingPort);
+                s = new Socket(hostingIp, currentAppHostingPort);
 
                 // Select the file to transfer
                 File fi = new File(hostingFilesFolder + fileToSendName);
@@ -985,9 +1000,6 @@ public class Client {
         return hostingFilesFolder;
     }
 
-    public int getHostingPort() {
-        return this.hostingPort;
-    }
 
     public int getCurrentAppNumber() {
         return currentAppNumber;

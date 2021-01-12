@@ -8,14 +8,20 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Tracker {
 
     private ServerSocket serverSocket;
     private ArrayList<SeederModel> seedersList = new ArrayList();
-    private BufferedReader reader;
-    private BufferedWriter writer;
-    private String receivedData;
+
+//  Client number for each connected app
+    private static int applicationNumber = 0;
+//  Client port for each connecting app
+    private static int hostingPort = 10000;
+
+//  Locker of the statics within all classes
+static ReentrantLock counterLock = new ReentrantLock(true);
 
     public Tracker(int port) {
         try {
@@ -84,6 +90,28 @@ public class Tracker {
                 strB.append(reader.readLine());
                 strB.append("\n");
 
+                receivedData = strB.toString();
+
+//              Splits input to a list
+                List<String> receivedDataList = splitReceivedWelcomeData(receivedData);
+
+                Integer clientNumber = Integer.parseInt(receivedDataList.get(0));
+                String clientIp = receivedDataList.get(1);
+                Integer clientHashCode = Integer.parseInt(receivedDataList.get(3));
+                Integer clientPort = null;
+
+                if (clientNumber == 0) {
+                    clientNumber = incrementAppNo();
+                    clientPort = 10000+clientNumber;
+
+    //              Sends to app its new number and new port
+                    writer.write(String.valueOf(clientNumber));
+                    writer.append("\n");
+                    writer.flush();
+
+                } else if (clientNumber != 0) {
+                    clientPort = Integer.parseInt(receivedDataList.get(2));
+                }
 
 //              Retrieves list of seeders (before appending new one to the list)
                 for (SeederModel element : seedersList) {
@@ -95,21 +123,14 @@ public class Tracker {
                     writer.append("-");
                     writer.append(String.valueOf(element.getSeederHash()));
                     writer.append("\n");
+
+                    System.out.println(element.toString());
                 }
                 writer.flush();
                 writer.close();
 
 
-                receivedData = strB.toString();
-
-//            Splits input to a list
-                List<String> receivedDataList = splitReceivedWelcomeData(receivedData);
-
-                Integer clientNumber = Integer.parseInt(receivedDataList.get(0));
-                String clientIp = receivedDataList.get(1);
-                Integer clientPort = Integer.parseInt(receivedDataList.get(2));
-                Integer clientHashCode = Integer.parseInt(receivedDataList.get(3));
-
+//                receivedData = strB.toString();
 
 //              Checks if client is in list with seeders
                 boolean containsHost = false;
@@ -125,6 +146,16 @@ public class Tracker {
                     }
 //                  If not, add new object with client data to the list
                     if (containsHost == false) {
+
+
+                        System.out.println(clientNumber);
+                        System.out.println(clientIp);
+                        System.out.println(clientPort);
+                        System.out.println(clientHashCode);
+
+                        System.out.println("random");
+
+
                         seedersList.add(new SeederModel(clientNumber, clientIp, clientPort, clientHashCode));
 //                      Prints out clients data if it is new
                         for (String element : receivedDataList) {
@@ -169,6 +200,28 @@ public class Tracker {
             return Arrays.asList(welcomeData.split("\\s*\\n\\s*"));
         }
     }
+
+
+    //  Increments App counter and Port number
+    static int incrementAppNo(){
+        counterLock.lock();
+
+        int tmpAppNo = 0;
+
+        try{
+
+            applicationNumber++;
+
+            tmpAppNo = applicationNumber;
+
+            System.out.println(Thread.currentThread().getName() + ": " + applicationNumber);
+
+        }finally{
+            counterLock.unlock();
+        }
+        return tmpAppNo;
+    }
+
 
     public ArrayList<SeederModel> getSeedersList() {
         return seedersList;
