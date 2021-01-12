@@ -2,9 +2,10 @@ package com.client;
 
 import com.client.view.ClientView;
 
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.lang.ref.Cleaner;
+import java.io.File;
 
 public class Main {
     public static void main(String[] args) {
@@ -84,7 +85,7 @@ public class Main {
     public static void startNewClient(ClientView clientView) {
 
         new Thread(() -> {
-            System.out.println("Starting Thread from main: "+Thread.currentThread().getName());
+            System.out.println("Starting Thread from main: " + Thread.currentThread().getName());
             Client client = new Client();
 
             clientView.getAppNumberLabel().setText(String.valueOf(client.getCurrentAppNumber()));
@@ -113,8 +114,9 @@ public class Main {
                 @Override
                 public void actionPerformed(ActionEvent e) {
 
+//                    TODO: validation of input
 //                  Client application asks the seeder who owns currently choosen file for download file
-                    client.askSeedersForFileToDownload(
+                    client.askSeederForFileToDownload(
 //                          Get currently choosen (clicked) file name
                             clientView.getCurrentlyChoosenFileName(),
 //                          Get from seeders list (from view), currently selected seeder ip
@@ -125,7 +127,31 @@ public class Main {
                 }
             });
 
-        }).start();
 
+            clientView.getSendFileButton().addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+
+                    JFileChooser chooser = new JFileChooser();
+                    chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                    chooser.setCurrentDirectory(new File(client.getHostingFilesFolder()));
+                    int returnVal = chooser.showOpenDialog(clientView.getFrame());
+                    if(returnVal == JFileChooser.APPROVE_OPTION) {
+
+                        client.sendFileToSeeder(
+//                              Get chosen file DIR
+                                chooser.getSelectedFile().getAbsolutePath(),
+//                              Get chosen file name
+                                chooser.getSelectedFile().getName(),
+//                              Get from seeders list (from view), currently selected seeder ip
+                                clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederIp(),
+//                              And port
+                                clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederPort()
+                        );
+                    }
+                }
+            });
+
+        }).start();
     }
 }

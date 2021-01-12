@@ -536,7 +536,6 @@ public class Client {
                         }
                     }
 
-
                 } catch (UnknownHostException e) {
                     e.printStackTrace();
                 } catch (IOException e) {
@@ -556,14 +555,13 @@ public class Client {
                     }
                 }
             }
-
     }
 
 
 
 
-    //  Asks each seeder in array for list of files to download and updates files in each seeder
-    public void askSeedersForFileToDownload(String fileName, String host, Integer port) {
+//  Asks each seeder in array for list of files to download and updates files in each seeder
+    public void askSeederForFileToDownload(String fileName, String host, Integer port) {
 
         try {
             if (fileName != null) {
@@ -672,30 +670,106 @@ public class Client {
 
 
 
+//  Sends file to particular seeder
+    public void sendFileToSeeder(String pathToFileWName ,String fileName, String host, Integer port) {
 
-//  TODO: Verify if it is needed to create socket from the beginning for each connection
-//  Makes connection with particular seeder
-    public void connectWithSeeder() {
+        BufferedReader reader = null;
+        BufferedWriter writer = null;
+
         try {
-//      Creates socket
-        socketForCommAsAClient = new Socket(trackerIp, trackerPort);
 
-//      Creates output stream buffer for writing data to tracker
-        outputStream = socketForCommAsAClient.getOutputStream();
-        out= new BufferedWriter(new OutputStreamWriter(outputStream, "UTF8"));
+//          Creates socket to connect with seeder
+            this.socketForCommAsAClient = new Socket(host, Integer.valueOf(port));
 
-//      Creates input stream buffer for getting data from the tracker
-        inputStream = socketForCommAsAClient.getInputStream();
-        in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
+            reader = new BufferedReader(new InputStreamReader(socketForCommAsAClient.getInputStream(), "UTF8"));
 
-//      Prints out information if successfully connected with tracker
-        System.out.println("Connection established with a tracker");
-    } catch (IOException e) {
-        e.printStackTrace();
+            writer = new BufferedWriter(new OutputStreamWriter(socketForCommAsAClient.getOutputStream(), "UTF8"));
+
+            File fi = new File(pathToFileWName);
+
+            DataInputStream fis = new DataInputStream(new FileInputStream(pathToFileWName));
+            DataOutputStream ps = new DataOutputStream(socketForCommAsAClient.getOutputStream());
+
+//          Sends request to the other seeder
+            writer.append("DOWNLOAD");
+            writer.append("\n");
+            writer.flush();
+
+
+//          Sending file name to the other seeder
+            writer.append(fileName);
+            writer.append("\n");
+            writer.flush();
+
+//          Sending file size
+            ps.writeLong((long) fi.length());
+            ps.flush();
+
+            int bufferSize = 8192;
+            byte[] buf = new byte[bufferSize];
+
+            while (true) {
+                int read = 0;
+                if (fis != null) {
+                    read = fis.read(buf);
+                }
+
+                if (read == -1) {
+                    break;
+                }
+                ps.write(buf, 0, read);
+            }
+            ps.flush();
+            // Note that the socket link is closed, otherwise the client will wait for the server data to come over.
+            // Until the socket times out, the data is incomplete.
+            fis.close();
+            ps.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (writer != null) {
+                    writer.close();
+                }
+                if (reader != null) {
+//                    System.out.println("Closing connection on app: "+currentAppNumber+" for another seeder");
+                    reader.close();
+                    socketForCommAsAClient.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
-//      Calls method responsible for communication with tracker
-        getSeedersList();
-    };
+
+
+
+
+
+////  TODO: Verify if it is needed to create socket from the beginning for each connection
+////  Makes connection with particular seeder
+//    public void connectWithSeeder() {
+//        try {
+////      Creates socket
+//        socketForCommAsAClient = new Socket(trackerIp, trackerPort);
+//
+////      Creates output stream buffer for writing data to tracker
+//        outputStream = socketForCommAsAClient.getOutputStream();
+//        out= new BufferedWriter(new OutputStreamWriter(outputStream, "UTF8"));
+//
+////      Creates input stream buffer for getting data from the tracker
+//        inputStream = socketForCommAsAClient.getInputStream();
+//        in = new BufferedReader(new InputStreamReader(inputStream, "UTF8"));
+//
+////      Prints out information if successfully connected with tracker
+//        System.out.println("Connection established with a tracker");
+//    } catch (IOException e) {
+//        e.printStackTrace();
+//    }
+////      Calls method responsible for communication with tracker
+//        getSeedersList();
+//    };
 
 
 
@@ -742,10 +816,14 @@ public class Client {
         this.client = socket;
     }
 
+    //  TODO: Fix too many Try Catch
     public void run() {
 
         BufferedWriter writer = null;
         BufferedReader reader = null;
+        String fileName = null;
+        int bufferSize = 8192;
+        byte[] buf = null;
 
         try {
 
@@ -769,24 +847,73 @@ public class Client {
                         writer.append("\n");
                     }
                     writer.flush();
-//                    writer.close();
-//                    reader.close();
-//                    client.close();
-//                    writer.append(null);
-//                    writer.flush();
                     break;
 
 //              Another seeder asks for downloading file
                 case "DOWNLOAD":
+
                     writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"));
+
+//                  Data input stream for File
+                    DataInputStream inputStream = new DataInputStream(
+                            new BufferedInputStream(client.getInputStream()));
+
+                    buf = new byte[bufferSize];
+                    long passedlen = 0;
+                    long len = 0;
+
+//                  Get name of the receiving file
+                    fileName = reader.readLine();
+
+//                  Iterate over files already in app folder
+                    for (File file : hostAppFiles) {
+//                      If app already contains file with same name
+                        if (file.getName().equals(fileName)) {
+//                          Find index of . before downloading file extension
+                            int extensionDotIndex = fileName.lastIndexOf('.');
+//                          Add -copy before extension .
+                            fileName = fileName.substring(0, extensionDotIndex) + "-copy" + fileName.substring(extensionDotIndex);
+                        }
+                    }
+
+//                  Creating file
+                    String file = hostingFilesFolder + fileName;
+
+                    DataOutputStream fileOut = new DataOutputStream(
+                            new BufferedOutputStream(new FileOutputStream(file)));
+
+                    len = inputStream.readLong();
+
+                    while (true) {
+                        int read = 0;
+                        if (inputStream != null) {
+                            read = inputStream.read(buf);
+                        }
+                        passedlen += read;
+                        if (read == -1) {
+                            break;
+                        }
+                        // The following progress bar is made for the prograssBar of the graphical interface. If you are typing a file, you may repeat the same percentage.
+                        System.out.println("File Received" + (passedlen * 100 / len)
+                                + "%\n");
+                        fileOut.write(buf, 0, read);
+                    }
+
+                    System.out.println("Receive completed, file saved as" + file + "\n");
+
+                    fileOut.close();
+
+                    loadFilesToShare();
+
                     break;
 
 //              Another seeder asks for sending file to this app
                 case "SEND":
+
                     writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"));
 
 //                  Get name of the file to send
-                    String fileName = reader.readLine();
+                    fileName = reader.readLine();
 
                     File fi = new File(hostingFilesFolder + fileName);
 
@@ -796,8 +923,7 @@ public class Client {
                     ps.writeLong((long) fi.length());
                     ps.flush();
 
-                    int bufferSize = 8192;
-                    byte[] buf = new byte[bufferSize];
+                    buf = new byte[bufferSize];
 
                     while (true) {
                         int read = 0;
@@ -817,6 +943,7 @@ public class Client {
                     ps.close();
                     break;
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -834,6 +961,7 @@ public class Client {
             }
         }
     }
+
 }
 
     public void setDirToSaveFile(String dirToSaveFile) {
