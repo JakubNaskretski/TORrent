@@ -24,37 +24,38 @@ public class Tracker {
 static ReentrantLock counterLock = new ReentrantLock(true);
 
     public Tracker(int port) {
-        try {
-//            seedersList.add(new SeederModel(0, "111.1111.111", 234, 2342));
-            serverSocket = new ServerSocket(port);
+
+            try {
+                serverSocket = new ServerSocket(port);
+
+                TrackerView trackerView = new TrackerView();
+                trackerView.getIpLabel().setText("Ip: "+serverSocket.getInetAddress().getHostAddress());
+                trackerView.getPortLabel().setText("Port: "+port);
 
 //          Run infinite loop for getting client request
-            while (true) {
+                while (true) {
 
 //              Accept socket
-                Socket client = serverSocket.accept();
+                    Socket client = serverSocket.accept();
 
 //              Create a new thread object
-                ClientHandler clientSocket = new ClientHandler(client);
+                    ClientHandler clientSocket = new ClientHandler(client);
 
 //              Thread to handle request
-                new Thread(clientSocket).start();
-            }
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        finally {
-            if (serverSocket != null) {
-                try {
-                    serverSocket.close();
+                    new Thread(clientSocket).start();
                 }
-                catch (IOException e) {
-                    e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (serverSocket != null) {
+                    try {
+                        serverSocket.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
-    }
 
 
 //  ClientHandler class
@@ -228,6 +229,7 @@ static ReentrantLock counterLock = new ReentrantLock(true);
     }
 
     public static void main(String[] args) {
-        new Tracker(10000);
+//        new TrackerView();
+//        new Tracker(10000);
     }
 }

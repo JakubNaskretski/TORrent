@@ -1,7 +1,6 @@
 package com.client;
 
 import com.client.view.ClientView;
-
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,8 +30,10 @@ public class Main {
     public static void startNewClient(ClientView clientView) {
 
         new Thread(() -> {
+            JOptionPane jOptionPane = new JOptionPane(clientView);
+
             System.out.println("Starting Thread from main: " + Thread.currentThread().getName());
-            Client client = new Client();
+            Client client = new Client(jOptionPane);
 
             clientView.getAppNumberLabel().setText(String.valueOf(client.getCurrentAppNumber()));
             clientView.getIpLabel().setText(client.getCurrentAppHostingIp());

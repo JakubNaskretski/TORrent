@@ -28,8 +28,10 @@ public class TestMain {
     public static void startNewClient(ClientView clientView) {
 
         new Thread(() -> {
+            JOptionPane jOptionPane = new JOptionPane();
+
             System.out.println("Starting Thread from main: " + Thread.currentThread().getName());
-            Client client = new Client();
+            Client client = new Client(jOptionPane);
 
             clientView.getAppNumberLabel().setText(String.valueOf(client.getCurrentAppNumber()));
             clientView.getIpLabel().setText(client.getCurrentAppHostingIp());
