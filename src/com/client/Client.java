@@ -454,10 +454,15 @@ public class Client {
      * Asks particular seeder for file to download
      * Updates files to download in app
      */
-    public void askSeederForFileToDownload(ClientView view, String fileName, String host, Integer port) {
+    public void askSeederForFileToDownload(ClientView view, final String fileName, String host, Integer port) {
+
+        new Thread(() -> {
 
         try {
             if (fileName != null) {
+
+//              Creates variable to add file name
+                String newFileName = null;
 
 //              Creates socket to connect with seeder
                 this.socketForCommAsAClient = new Socket(host, Integer.valueOf(port));
@@ -499,13 +504,19 @@ public class Client {
                         int extensionDotIndex = fileName.lastIndexOf('.');
 
 //                      Add copy before extension .
-                        fileName = fileName.substring(0, extensionDotIndex) + "copy" + fileName.substring(extensionDotIndex);
+//                        fileName = fileName.substring(0, extensionDotIndex) + "copy" + fileName.substring(extensionDotIndex);
+                        newFileName = fileName.substring(0, extensionDotIndex) + "copy" + fileName.substring(extensionDotIndex);
+
+                    } else {
+
+//                      Overcome final variable
+                        newFileName = fileName;
 
                     }
                 }
 
                 // Get the file name
-                String file = hostingFilesFolder + fileName;
+                String file = hostingFilesFolder + newFileName;
 
                 DataOutputStream fileOut = new DataOutputStream(
                         new BufferedOutputStream(new FileOutputStream(file)));
@@ -523,8 +534,11 @@ public class Client {
                         break;
                     }
 
+                    System.out.println("Downloaded " + (passedlen / len) * 100 + "% of file");
+
+
 //                  File progress bar
-                    view.changeDownloadFileLabel("Downloaded " + (passedlen * 100 / len) + "% of file");
+                    view.changeDownloadFileLabel("Downloaded " + (passedlen / len) * 100 + "% of file");
 
 //                    wait(1);
 
@@ -551,7 +565,7 @@ public class Client {
             fileNotFoundException.printStackTrace();
         } catch (IOException ioException) {
             ioException.printStackTrace();
-        }finally {
+        } finally {
             try {
                 if (in != null) {
                     in.close();
@@ -570,6 +584,7 @@ public class Client {
                 e.printStackTrace();
             }
         }
+    }).start();
     }
 
 

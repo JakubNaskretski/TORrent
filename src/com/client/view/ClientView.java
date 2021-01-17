@@ -510,6 +510,7 @@ public class ClientView {
 
     public void changeDownloadFileLabel(String text) {
         downloadProgressLabel.setText(text);
+        progressBarPanel.repaint();
         repaintFrame();
     }
 
