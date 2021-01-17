@@ -2,6 +2,7 @@ package com.client;
 
 import com.SeederModel;
 import com.client.view.ClientView;
+import com.tracker.Tracker;
 
 import java.io.*;
 import java.net.*;
@@ -454,18 +455,60 @@ public class Client {
      * Asks particular seeder for file to download
      * Updates files to download in app
      */
-    public void askSeederForFileToDownload(ClientView view, final String fileName, String host, Integer port) {
-
-        new Thread(() -> {
+    public void askSeederForFileToDownload(ClientView view, String fileName, ArrayList<SeederModel> seedersList) {
 
         try {
-            if (fileName != null) {
+
+//      How many seeders clicked
+            int seedersNumber = seedersList.size();
+
+//      For each seeder run new thread
+            for (int i = 0; i < seedersNumber; i++) {
+
+////          Gets ip of i clicked host in the list
+//            String hostIp = seedersList.get(seedersNumber).getSeederIp();
+//
+////          Gets ip of i clicked host in the list
+//            int hostPort = seedersList.get(seedersNumber).getSeederPort();
+
+//              Creates socket to connect with seeder
+                this.socketForCommAsAClient = new Socket(seedersList.get(seedersNumber).getSeederIp(), seedersList.get(seedersNumber).getSeederPort());
+
+//              Create file download handler thread (Adds i + 1 since i starts from 0)
+                DownloadFileHandler downloadFileHandler = new DownloadFileHandler(view, fileName, i + 1, seedersNumber, socketForCommAsAClient);
+
+//              Thread to handle request
+                new Thread(downloadFileHandler).start();
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private class DownloadFileHandler implements Runnable {
+
+        private ClientView view;
+        private String fileName;
+        private int partOfTheFile;
+        private int totalFileParts;
+        private Socket socketForCommAsAClient;
+
+        private DownloadFileHandler(ClientView view, String fileName, int partOfTheFile, int totalFileParts, Socket socketForCommAsAClient) {
+            this.view = view;
+            this.fileName = fileName;
+            this.partOfTheFile = partOfTheFile;
+            this.totalFileParts = totalFileParts;
+            this.socketForCommAsAClient = socketForCommAsAClient;
+
+        }
+
+        public void run() {
+
+            try {
 
 //              Creates variable to add file name
                 String newFileName = null;
-
-//              Creates socket to connect with seeder
-                this.socketForCommAsAClient = new Socket(host, Integer.valueOf(port));
 
 //              Creates output stream buffer for writing data to seeder
                 outputStream = socketForCommAsAClient.getOutputStream();
@@ -491,6 +534,16 @@ public class Client {
 
 //              Sending name of the file to download to the other seeder
                 out.append(fileName);
+                out.append("\n");
+                out.flush();
+
+//              Sending for how many parts should be file split
+                out.append(String.valueOf(totalFileParts));
+                out.append("\n");
+                out.flush();
+
+//              Sending which part of the file is needed
+                out.append(String.valueOf(partOfTheFile));
                 out.append("\n");
                 out.flush();
 
@@ -555,42 +608,39 @@ public class Client {
 
 //              Refresh file list to download from app
                 loadFilesToShare();
-            }
 
-        } catch (UnknownHostException unknownHostException) {
-            unknownHostException.printStackTrace();
-        } catch (UnsupportedEncodingException unsupportedEncodingException) {
-            unsupportedEncodingException.printStackTrace();
-        } catch (FileNotFoundException fileNotFoundException) {
-            fileNotFoundException.printStackTrace();
-        } catch (IOException ioException) {
-            ioException.printStackTrace();
-        } finally {
-            try {
-                if (in != null) {
-                    in.close();
+            } catch (UnknownHostException unknownHostException) {
+                unknownHostException.printStackTrace();
+            } catch (UnsupportedEncodingException unsupportedEncodingException) {
+                unsupportedEncodingException.printStackTrace();
+            } catch (FileNotFoundException fileNotFoundException) {
+                fileNotFoundException.printStackTrace();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            } finally {
+                try {
+                    if (in != null) {
+                        in.close();
+                    }
+                    if (inputStream != null) {
+                        inputStream.close();
+                    }
+                    if (out != null) {
+                        out.close();
+                        socketForCommAsAClient.close();
+                    }
+                    if (outputStream != null) {
+                        outputStream.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-                if (inputStream != null) {
-                    inputStream.close();
-                }
-                if (out != null) {
-                    out.close();
-                    socketForCommAsAClient.close();
-                }
-                if (outputStream != null) {
-                    outputStream.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
-    }).start();
     }
 
-
-
 //  Sends file to particular seeder
-    public void sendFileToSeeder(String pathToFileWName ,String fileName, String host, Integer port) {
+    public void sendFileToSeeder(String pathToFileWName ,String fileName, ArrayList<SeederModel> seedersList) {
 
         BufferedReader reader = null;
         BufferedWriter writer = null;
@@ -598,7 +648,7 @@ public class Client {
         try {
 
 //          Creates socket to connect with seeder
-            this.socketForCommAsAClient = new Socket(host, Integer.valueOf(port));
+//            this.socketForCommAsAClient = new Socket(host, Integer.valueOf(port));
 
             reader = new BufferedReader(new InputStreamReader(socketForCommAsAClient.getInputStream(), "UTF8"));
 
@@ -715,6 +765,7 @@ public class Client {
         String fileName = null;
         int bufferSize = 8192;
         byte[] buf = null;
+        String filePart, howManyFileParts;
 
         try {
 
@@ -815,6 +866,12 @@ public class Client {
                     fileName = reader.readLine();
 
                     File fi = new File(hostingFilesFolder + fileName);
+
+//                  Read how many parts of the file should be
+                    howManyFileParts = reader.readLine();
+
+//                  Read which part of the file is needed
+                    filePart = reader.readLine();
 
                     DataInputStream fis = new DataInputStream(new FileInputStream(hostingFilesFolder + fileName));
                     DataOutputStream ps = new DataOutputStream(client.getOutputStream());

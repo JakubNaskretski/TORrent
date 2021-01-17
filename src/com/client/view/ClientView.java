@@ -35,8 +35,8 @@ public class ClientView {
     private ArrayList<JPanel> seedersJPanelList, filesList;
     private ArrayList<SeederModel> seeders;
 
-    private int currentlyChosenSeeder = 0;
-    private int previouslyChosenSeeder;
+    private ArrayList<Integer> currentlyChosenSeeders = new ArrayList<>();
+    private ArrayList<Integer> previouslyChosenSeeders = new ArrayList<>();
     private int previouslyChosenFileNo, currentlyChosenFileNo;
     private String currentlyChoosenFileName;
 
@@ -327,8 +327,23 @@ public class ClientView {
                 if (e.getButton() == MouseEvent.BUTTON3) {
                     System.out.println("Kliknięto prawym");
                 } else if (e.getButton() == MouseEvent.BUTTON1) {
-                    previouslyChosenSeeder = currentlyChosenSeeder;
-                    currentlyChosenSeeder = seederNumberInList;
+
+//                  If clicked seeder not in list add it
+                    if (!currentlyChosenSeeders.contains(Integer.valueOf(seederNumberInList))) {
+                        currentlyChosenSeeders.add(Integer.valueOf(seederNumberInList));
+
+//                  If seeder already in list, remove it after 2nd click
+                    } else if (currentlyChosenSeeders.contains(Integer.valueOf(seederNumberInList))) {
+//                        previouslyChosenSeeders.add(currentlyChosenSeeders.get)
+//
+//                        Integer tmp = currentlyChosenSeeders.get(seederNumberInList);
+
+                        previouslyChosenSeeders.add((currentlyChosenSeeders.get(currentlyChosenSeeders.indexOf(Integer.valueOf(seederNumberInList)))));
+                        currentlyChosenSeeders.remove((currentlyChosenSeeders.get(currentlyChosenSeeders.indexOf(Integer.valueOf(seederNumberInList)))));
+
+                    }
+
+//                  TODO: FIX ConcurenctModicifactionException
                     clickedJPanelVisualSeeders();
 
 //                  Clears JPanel files list
@@ -430,15 +445,23 @@ public class ClientView {
 //  Changes borders visual according to the currently clicked JPanel
     public void clickedJPanelVisualSeeders() {
 //      If there was previously changed JPanel
-        if (previouslyChosenSeeder >= 0){
+        if (!previouslyChosenSeeders.isEmpty()){
 //          Return normal border
-            seedersJPanelList.get(previouslyChosenSeeder).setBorder(BorderFactory.createTitledBorder(
-                    BorderFactory.createRaisedBevelBorder(), "",
-                    TitledBorder.CENTER,
-                    TitledBorder.TOP));
+            for (Integer previouslyChosenSeeder : previouslyChosenSeeders) {
+                seedersJPanelList.get(previouslyChosenSeeder).setBorder(BorderFactory.createTitledBorder(
+                        BorderFactory.createRaisedBevelBorder(), "",
+                        TitledBorder.CENTER,
+                        TitledBorder.TOP));
+                previouslyChosenSeeders.remove(previouslyChosenSeeder);
+            }
+
         }
 //      Change border in new JPanel
-        seedersJPanelList.get(currentlyChosenSeeder).setBorder(BorderFactory.createLoweredBevelBorder());
+
+
+        for (Integer currentlyChosenSeeder : currentlyChosenSeeders) {
+            seedersJPanelList.get(currentlyChosenSeeder).setBorder(BorderFactory.createLoweredBevelBorder());
+        }
     }
 
 
@@ -519,6 +542,20 @@ public class ClientView {
                 text);
     }
 
+//  Method to pass seeders from whom files should be downloaded
+    public ArrayList<SeederModel> getListOfSeedersForDownload(){
+
+//        Creates tmp array
+        ArrayList<SeederModel> tmp = new ArrayList<SeederModel>();
+
+//      For each currently clicked seeder makes copy in new tmp array
+        for (Integer element : currentlyChosenSeeders) {
+            tmp.add(seeders.get(element));
+        }
+
+        return tmp;
+
+    }
 
     public JFrame getFrame() {
         return frame;
@@ -572,8 +609,8 @@ public class ClientView {
         return reloadFiles;
     }
 
-    public int getCurrentlyChosenSeeder() {
-        return currentlyChosenSeeder;
+    public ArrayList<Integer> getCurrentlyChosenSeeders() {
+        return currentlyChosenSeeders;
     }
 
     public int getCurrentlyChosenFileNo() {

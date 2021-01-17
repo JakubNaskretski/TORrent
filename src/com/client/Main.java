@@ -73,10 +73,8 @@ public class Main {
                             clientView,
 //                          Get currently choosen (clicked) file name
                             clientView.getCurrentlyChoosenFileName(),
-//                          Get from seeders list (from view), currently selected seeder ip
-                            clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederIp(),
-//                          And port
-                            clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederPort()
+//                          Get copy of seeders model which are currently beeing clicked
+                            clientView.getListOfSeedersForDownload()
                     );
                 }
             });
@@ -97,10 +95,8 @@ public class Main {
                                 chooser.getSelectedFile().getAbsolutePath(),
 //                              Get chosen file name
                                 chooser.getSelectedFile().getName(),
-//                              Get from seeders list (from view), currently selected seeder ip
-                                clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederIp(),
-//                              And port
-                                clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederPort()
+//                              Get copy of seeders model which are currently beeing clicked
+                                clientView.getListOfSeedersForDownload()
                         );
                     }
                 }
