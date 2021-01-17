@@ -4,6 +4,8 @@ import com.SeederModel;
 import com.client.view.ClientView;
 import com.tracker.Tracker;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.net.*;
 import java.security.MessageDigest;
@@ -11,6 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantLock;
@@ -61,6 +64,9 @@ public class Client {
 //  If connection with tracker was successful flag
     private boolean connectedToTracker = false;
 
+//  JOptionPane to display errors
+    JOptionPane jOptionPane;
+
 //  List of files
     ConcurrentHashMap<File, String> hostAppFiles;
 
@@ -78,7 +84,8 @@ public class Client {
     private boolean stop;
 
 //  Constructor
-    public Client() {
+    public Client(JOptionPane jOptionPane) {
+        this.jOptionPane = jOptionPane;
 
 //      Gets host app ip out
         try {
@@ -118,7 +125,8 @@ public class Client {
         }
 
 //      Creates directory to store files
-        this.hostingFilesFolder = "D:\\TORrent_"+currentAppNumber+"\\";
+//        this.hostingFilesFolder = "D:\\TORrent_"+currentAppNumber+"\\";
+        this.hostingFilesFolder = "C:\\Users\\jnaskretski\\Desktop\\TORrent\\"+currentAppNumber+"\\";
 
 //      Starts listening for other seeders
             new Thread(() -> {
@@ -205,7 +213,6 @@ public class Client {
 
         try {
             try {
-
 //          Creates socket to connect with tracker
                 this.socketForCommAsAClient = new Socket(trackerIp, trackerPort);
 
@@ -341,6 +348,10 @@ public class Client {
                     }
                 }
             } else {
+                JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                        "Cannot get seeders list without connection to tracker.",
+                        "Getting seeders list error",
+                        JOptionPane.ERROR_MESSAGE);
                 System.out.println("Cannot get seeders list without connection to tracker on the app: " + currentAppNumber);
             }
     }
@@ -369,6 +380,8 @@ public class Client {
      * Updates file list in each seeder in array wit hreceived data
      */
     public void askSeedersForFilesList() {
+
+        if (!seedersArray.isEmpty()) {
 
             for (SeederModel seederModel : seedersArray) {
 
@@ -401,12 +414,12 @@ public class Client {
 
                     String currentLine;
 
-                        while ((currentLine = in.readLine()) != null) {
-                            strB.append(currentLine);
-                            strB.append("\n");
-                        }
+                    while ((currentLine = in.readLine()) != null) {
+                        strB.append(currentLine);
+                        strB.append("\n");
+                    }
 
-                        receivedData = strB.toString();
+                    receivedData = strB.toString();
 
 //                  Prevents doing next lines if received filesData is empty
                     if (!receivedData.isEmpty()) {
@@ -432,8 +445,7 @@ public class Client {
                     e.printStackTrace();
                 } catch (IOException e) {
                     e.printStackTrace();
-                }
-                finally {
+                } finally {
                     try {
                         if (in != null) {
                             in.close();
@@ -447,6 +459,13 @@ public class Client {
                     }
                 }
             }
+        } else {
+            JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                    "Does not have data of any seeder, please use reload button",
+                    "No seeders data",
+                    JOptionPane.ERROR_MESSAGE);
+            System.out.println("No data of any seeder");
+        }
     }
 
 

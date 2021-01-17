@@ -1,22 +1,19 @@
 package com.client;
 
 import com.client.view.ClientView;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
-public class Main {
+public class TestMain {
 
     public static void main(String[] args) {
 
         ClientView clientView1 = new ClientView();
-        ClientView clientView2 = new ClientView();
-        ClientView clientView3 = new ClientView();
 
         startNewClient(clientView1);
-        startNewClient(clientView2);
-        startNewClient(clientView3);
 
     }
 
@@ -27,10 +24,11 @@ public class Main {
     }
 
 
+
     public static void startNewClient(ClientView clientView) {
 
         new Thread(() -> {
-            JOptionPane jOptionPane = new JOptionPane(clientView);
+            JOptionPane jOptionPane = new JOptionPane();
 
             System.out.println("Starting Thread from main: " + Thread.currentThread().getName());
             Client client = new Client(jOptionPane);
@@ -47,8 +45,7 @@ public class Main {
             clientView.getReloadHostsList().addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-//                    Makes reload lagg app
-//                    client.loadFilesToShare();
+                    client.loadFilesToShare();
 
                     client.connectWithTracker();
                     client.askSeedersForFilesList();
@@ -60,6 +57,7 @@ public class Main {
 
                     clientView.createSeedersJPanelsArray();
                     clientView.addSeedersJPanelListToLeftPanel();
+
                 }
             });
 
@@ -74,9 +72,11 @@ public class Main {
                             clientView,
 //                          Get currently choosen (clicked) file name
                             clientView.getCurrentlyChoosenFileName(),
-//                          Get copy of seeders model which are currently beeing clicked
-                            clientView.getListOfSeedersForDownload()
-                    );
+//                          Get from seeders list (from view), currently selected seeder ip
+                            clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederIp(),
+//                          And port
+                            clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederPort());
+
                 }
             });
 
@@ -96,8 +96,10 @@ public class Main {
                                 chooser.getSelectedFile().getAbsolutePath(),
 //                              Get chosen file name
                                 chooser.getSelectedFile().getName(),
-//                              Get copy of seeders model which are currently beeing clicked
-                                clientView.getListOfSeedersForDownload()
+//                              Get from seeders list (from view), currently selected seeder ip
+                                clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederIp(),
+//                              And port
+                                clientView.getSeeders().get(clientView.getCurrentlyChosenSeeder()).getSeederPort()
                         );
                     }
                 }
@@ -106,3 +108,7 @@ public class Main {
         }).start();
     }
 }
+
+
+
+
