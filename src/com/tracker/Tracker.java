@@ -228,8 +228,4 @@ static ReentrantLock counterLock = new ReentrantLock(true);
         return seedersList;
     }
 
-    public static void main(String[] args) {
-//        new TrackerView();
-//        new Tracker(10000);
-    }
 }
