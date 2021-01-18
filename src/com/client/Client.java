@@ -461,7 +461,7 @@ public class Client {
             }
         } else {
             JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                    "Does not have data of any seeder, please use reload button",
+                    " No seedeers data have been loaded, please use reload button",
                     "No seeders data",
                     JOptionPane.ERROR_MESSAGE);
             System.out.println("No data of any seeder");
@@ -478,8 +478,21 @@ public class Client {
 
         try {
 
-//      How many seeders clicked
+//          How many seeders clicked
             int seedersNumber = seedersList.size();
+
+//          Checks if the same file is on selected seeders
+            for (SeederModel seeder : seedersList) {
+                if (!seeder.getFilesMap().containsKey(fileName)) {
+
+                    JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                            "Cannot download file mutually from chosen seeders. \nNot all of them have file",
+                            "File not on all seeders",
+                            JOptionPane.ERROR_MESSAGE);
+
+                    return;
+                }
+            }
 
 //      For each seeder run new thread
             for (int i = 0; i < seedersNumber; i++) {

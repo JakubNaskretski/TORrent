@@ -9,6 +9,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 
 public class ClientView {
 
@@ -53,7 +54,7 @@ public class ClientView {
 
 //      Create frame
         this.frame = new JFrame();
-        mainFrameWidth = screenWidth / 3;
+        mainFrameWidth = (int)(screenWidth / 2.5);
         mainFrameHeight = screenHeight / 2;
 
         this.mainFrameDimension = new Dimension(mainFrameWidth, mainFrameHeight);
@@ -155,7 +156,6 @@ public class ClientView {
         progressBarPanel.setPreferredSize(new Dimension(mainFrameWidth/3,mainFrameHeight/12));
         GridBagConstraints progressC = new GridBagConstraints();
 
-//      TODO: Make visual representation of downloading file
 //      Add progress bar panel to the main
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridwidth = 4;
@@ -352,11 +352,20 @@ public class ClientView {
 //                  Counter used to get numeration of files for border change
                     int fileNumber = 0;
 
-//                  Creates JPanel array containign all files for clicked App
-                    for (String fileName : seeder.getFilesMap().keySet()) {
+////                  Creates JPanel array containing all files for clicked App
+//                    for (String fileName : seeder.getFilesMap().keySet()) {
+////                      For each file, create JPanel and add it to files JPanel list
+//                        filesList.add(createFilePanel(seeder, fileName, fileNumber));
+//                        fileNumber++;
+//                    }
+
+//                  Creates JPanel array containing all files from currently clicked seeders
+                    for (Integer seederNumber : currentlyChosenSeeders) {
+                        for (String fileName : seeders.get(seederNumber).getFilesMap().keySet()) {
 //                      For each file, create JPanel and add it to files JPanel list
-                        filesList.add(createFilePanel(seeder, fileName, fileNumber));
-                        fileNumber++;
+                            filesList.add(createFilePanel(seeders.get(seederNumber).getSeederAppNumber(), fileName, fileNumber, seeders.get(seederNumber).getFilesMap().get(fileName)));
+                            fileNumber++;
+                        }
                     }
 
                     rightFilesPanel.removeAll();
@@ -397,7 +406,7 @@ public class ClientView {
 
 
     //  Creates separate JPanel for given seeders files
-    public JPanel createFilePanel(SeederModel seeder, String fileName, int fileNumber) {
+    public JPanel createFilePanel(Integer seederNumber, String fileName, int fileNumber, String checkSum) {
 
         GridBagLayout gridBagLayout = new GridBagLayout();
         GridBagConstraints c = new GridBagConstraints();
@@ -405,7 +414,7 @@ public class ClientView {
         JPanel tmpPanel = new JPanel();
         tmpPanel.setLayout(gridBagLayout);
 
-        JTextField tmpJTextField = new JTextField(fileName);
+        JTextField tmpJTextField = new JTextField(fileName + " - on app " + seederNumber);
         tmpJTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
 //      Sets info about notes in view or removes task
@@ -419,7 +428,7 @@ public class ClientView {
                     currentlyChosenFileNo = fileNumber;
                     currentlyChoosenFileName = fileName;
                     clickedJPanelVisualFiles();
-                    displayFileControlSum(seeder.getFilesMap().get(fileName));
+                    displayFileControlSum(checkSum);
                     System.out.println("Klinięto lewym przyciskiem na plik");
 
                     repaintFrame();
@@ -446,13 +455,23 @@ public class ClientView {
     public void clickedJPanelVisualSeeders() {
 //      If there was previously changed JPanel
         if (!previouslyChosenSeeders.isEmpty()){
-//          Return normal border
-            for (Integer previouslyChosenSeeder : previouslyChosenSeeders) {
-                seedersJPanelList.get(previouslyChosenSeeder).setBorder(BorderFactory.createTitledBorder(
+
+
+            for (Iterator<Integer> it = previouslyChosenSeeders.iterator(); it.hasNext();) {
+                Integer next = it.next();
+                seedersJPanelList.get(next).setBorder(BorderFactory.createTitledBorder(
                         BorderFactory.createRaisedBevelBorder(), "",
                         TitledBorder.CENTER,
                         TitledBorder.TOP));
-                previouslyChosenSeeders.remove(previouslyChosenSeeder);
+                it.remove();
+
+////          Return normal border
+//            for (Integer previouslyChosenSeeder : previouslyChosenSeeders) {
+//                seedersJPanelList.get(previouslyChosenSeeder).setBorder(BorderFactory.createTitledBorder(
+//                        BorderFactory.createRaisedBevelBorder(), "",
+//                        TitledBorder.CENTER,
+//                        TitledBorder.TOP));
+//                previouslyChosenSeeders.remove(previouslyChosenSeeder);
             }
 
         }

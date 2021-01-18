@@ -69,12 +69,12 @@ public class Main {
                 public void actionPerformed(ActionEvent e) {
 
 //                    TODO: validation of input
-//                  Client application asks the seeder who owns currently choosen file for download file
+//                  Client application asks the seeder who owns currently chosen file for download file
                     client.askSeederForFileToDownload(
                             clientView,
-//                          Get currently choosen (clicked) file name
+//                          Get currently chosen (clicked) file name
                             clientView.getCurrentlyChoosenFileName(),
-//                          Get copy of seeders model which are currently beeing clicked
+//                          Get copy of seeders model which are currently being clicked
                             clientView.getListOfSeedersForDownload()
                     );
                 }
