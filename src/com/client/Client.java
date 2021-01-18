@@ -6,7 +6,9 @@ import com.client.view.ClientView;
 import javax.swing.*;
 import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -124,8 +126,8 @@ public class Client {
         }
 
 //      Creates directory to store files
-//        this.hostingFilesFolder = "D:\\TORrent_"+currentAppNumber+"\\";
-        this.hostingFilesFolder = "C:\\Users\\jnaskretski\\Desktop\\TORrent\\"+currentAppNumber+"\\";
+        this.hostingFilesFolder = "D:\\TORrent_"+currentAppNumber+"\\";
+//        this.hostingFilesFolder = "C:\\Users\\jnaskretski\\Desktop\\TORrent\\"+currentAppNumber+"\\";
 
 //      Starts listening for other seeders
             new Thread(() -> {
@@ -627,7 +629,12 @@ public class Client {
 
 //                    wait(1);
 
+
+                    System.out.println("File part "+partOfTheFile+new String(buf, StandardCharsets.UTF_8));
+
+
                     fileOut.write(buf, 0, read);
+
 
                 }
 
@@ -816,7 +823,7 @@ public class Client {
 //                  Iterates over file list and prints to the output file names
 
 //                    for (Map.Entry<File, String> element : hostAppFiles.entrySet()) {
-                    for (Iterator<File> keys = hostAppFiles.keySet().iterator(); keys.hasNext();) {
+                    for (Iterator<File> keys = hostAppFiles.keySet().iterator(); keys.hasNext(); ) {
 
                         File key = keys.next();
                         String val = hostAppFiles.get(key);
@@ -898,7 +905,8 @@ public class Client {
 //                  Get name of the file to send
                     fileName = reader.readLine();
 
-                    File fi = new File(hostingFilesFolder + fileName);
+//                    File fi = new File(hostingFilesFolder + fileName);
+                    RandomAccessFile fi = new RandomAccessFile(hostingFilesFolder + fileName, "r");
 
 //                  Read how many parts of the file should be
                     howManyFileParts = Integer.parseInt(reader.readLine());
@@ -915,7 +923,6 @@ public class Client {
 //                    FileChannel      toChannel = toFile.getChannel();
 //
 //                    toChannel.transferFrom(sourceChannel, 0, bytesPerSplit);
-
 
 
 //                    SocketChannel clientChannel= client;
@@ -942,68 +949,89 @@ public class Client {
 //                    long numSplits = 10; //from user input, extract it from args
 
 
-                         DataInputStream fis = new DataInputStream(new FileInputStream(hostingFilesFolder + fileName));
-                         DataOutputStream ps = new DataOutputStream(client.getOutputStream());
-
-//                    ps.writeLong((long) bytesOfFilePart);
-                         ps.writeLong((long) fi.length());
-                         ps.flush();
-
-                         buf = new byte[bufferSize];
-
-
-
+                    DataOutputStream ps = new DataOutputStream(client.getOutputStream());
 
                     long sourceSize = fi.length();
-                    long partOfFileSize = sourceSize/howManyFileParts;
-                    long filePositionToStart = sourceSize - partOfFileSize;
-                    long startingPointToRead = sourceSize - (partOfFileSize * filePart);
+                    long sizeOfFilePart = sourceSize / howManyFileParts;
+//                    long filePositionToStart = sourceSize - sizeOfFilePart;
+                    long startingPointToRead = sourceSize - (sizeOfFilePart * filePart);
+                    long endingPointToRead = startingPointToRead + sizeOfFilePart;
 
-                    try (RandomAccessFile fileChannelReader = new RandomAccessFile(hostingFilesFolder + fileName, "r");
-                         FileChannel channel = fileChannelReader.getChannel();
+                    ps.writeLong(sizeOfFilePart);
+//                         ps.writeLong((long) fi.length());
+                    ps.flush();
 
-                         ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+//                         buf = new byte[bufferSize];
 
-//                        int bufferSize = 1024;
+//                         DataInputStream fis = new DataInputStream(new FileInputStream(hostingFilesFolder + fileName));
+
+
+//
+
+//
+//                    try (RandomAccessFile fileChannelReader = new RandomAccessFile(hostingFilesFolder + fileName, "r");
+//                         FileChannel channel = fileChannelReader.getChannel();
+//
+//                         ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+//
 //                        if (bufferSize > channel.size()) {
 //                            bufferSize = (int) channel.size();
 //                        }
 //                        ByteBuffer buff = ByteBuffer.allocate(bufferSize);
+//
+////                        int bufferSize = 1024;
+////                        if (bufferSize > channel.size()) {
+////                            bufferSize = (int) channel.size();
+////                        }
+////                        ByteBuffer buff = ByteBuffer.allocate(bufferSize);
+//
+//                        while (channel.read(buff, startingPointToRead, partOfFileSize) > 0) {
+//                            out.write(buff.array(), 0, buff.position());
+//                            buff.clear();
+//                        }
 
-                        while (channel.read(buff, ofset, length) > 0) {
-                            out.write(buff.array(), 0, buff.position());
-                            buff.clear();
-                        }
+
+                    long position = 0;
+
+                    fi.seek(startingPointToRead);
 
 
+                    while (position < endingPointToRead) {
 
-
-
-                    while (true) {
                         int read = 0;
-                        if (fis != null) {
-                            read = fis.read(buf);
-                        }
+                        read += fi.read();
+                        position = fi.getFilePointer();
 
                         if (read == -1) {
                             break;
                         }
-                        ps.write(buf, 0, read);
+                        ps.write(read);
                     }
                     ps.flush();
-                    // Note that the socket link is closed, otherwise the client will wait for the server data to come over.
-                    // Until the socket times out, the data is incomplete.
-                    fis.close();
+                    System.out.println("Finished part of the file "+filePart);
+                    fi.close();
+
+
+//
+//                    while (true) {
+//                        int read = 0;
+//                        if (fis != null) {
+//                            read = fis.read(buf);
+//                        }
+//
+//                        if (read == -1) {
+//                            break;
+//                        }
+//                        ps.write(buf, 0, read);
+//                    }
+//                    ps.flush();
+//                    // Note that the socket link is closed, otherwise the client will wait for the server data to come over.
+//                    // Until the socket times out, the data is incomplete.
+//                    fis.close();
                     ps.close();
                     break;
-            } catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+            }
 
-            } catch (FileNotFoundException e) {
-            System.out.println("File have not been found");
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
