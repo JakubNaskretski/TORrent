@@ -74,6 +74,8 @@ public class Main {
                             clientView,
 //                          Get currently chosen (clicked) file name
                             clientView.getCurrentlyChoosenFileName(),
+//                            Get currently chosen (clicked) file check sum
+                            clientView.getCurrentlyChosenFileCheckSum(),
 //                          Get copy of seeders model which are currently being clicked
                             clientView.getListOfSeedersForDownload()
                     );

@@ -40,6 +40,7 @@ public class ClientView {
     private ArrayList<Integer> previouslyChosenSeeders = new ArrayList<>();
     private int previouslyChosenFileNo, currentlyChosenFileNo;
     private String currentlyChoosenFileName;
+    private String currentlyChosenFileCheckSum, previouslyChosenFileCheckSum;
 
     public ClientView() {
 
@@ -427,6 +428,10 @@ public class ClientView {
                     previouslyChosenFileNo = currentlyChosenFileNo;
                     currentlyChosenFileNo = fileNumber;
                     currentlyChoosenFileName = fileName;
+
+                    currentlyChosenFileCheckSum = currentlyChosenFileCheckSum;
+                    currentlyChosenFileCheckSum = checkSum;
+
                     clickedJPanelVisualFiles();
                     displayFileControlSum(checkSum);
                     System.out.println("Klinięto lewym przyciskiem na plik");
@@ -654,5 +659,9 @@ public class ClientView {
 
     public JLabel getDownloadProgressLabel() {
         return downloadProgressLabel;
+    }
+
+    public String getCurrentlyChosenFileCheckSum() {
+        return currentlyChosenFileCheckSum;
     }
 }
