@@ -70,14 +70,16 @@ public class Main {
 
 //                    TODO: validation of input
 //                  Client application asks the seeder who owns currently chosen file for download file
-                    client.askSeederForFileToDownload(
+                    client.askSeedersForFileToDownload(
                             clientView,
 //                          Get currently chosen (clicked) file name
                             clientView.getCurrentlyChoosenFileName(),
 //                            Get currently chosen (clicked) file check sum
                             clientView.getCurrentlyChosenFileCheckSum(),
 //                          Get copy of seeders model which are currently being clicked
-                            clientView.getListOfSeedersForDownload()
+                            clientView.getListOfSeedersForDownload(),
+//                          If downloading was interrupted - used for recalling method
+                            false
                     );
                 }
             });

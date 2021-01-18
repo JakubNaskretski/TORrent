@@ -84,6 +84,11 @@ public class Client {
     private String receivedData, dirToSaveFile;
     private boolean stop;
 
+    ClientView lastUsedView;
+    String lastUsedFileName, lastUsedCheckSum;
+    ArrayList<SeederModel> lastUsedSeedersList;
+    int lastUsedPosition;
+
 //  Constructor
     public Client(JOptionPane jOptionPane) {
         this.jOptionPane = jOptionPane;
@@ -475,7 +480,7 @@ public class Client {
      * Asks particular seeder for file to download
      * Updates files to download in app
      */
-    public void askSeederForFileToDownload(ClientView view, String fileName, String fileCheckSum, ArrayList<SeederModel> seedersList) {
+    public void askSeedersForFileToDownload(ClientView view, String fileName, String fileCheckSum, ArrayList<SeederModel> seedersList, boolean wasInterrupted) {
 
         try {
 
@@ -506,6 +511,14 @@ public class Client {
                 }
             }
 
+//          Makes copy of data in case connection was interrupted
+            lastUsedView = view;
+            lastUsedFileName = fileName;
+            lastUsedCheckSum = fileCheckSum;
+            lastUsedSeedersList = seedersList;
+
+
+
 //      For each seeder run new thread
             for (int i = 0; i < seedersNumber; i++) {
 
@@ -513,7 +526,7 @@ public class Client {
                 Socket socketForCommAsAClient = new Socket(seedersList.get(i).getSeederIp(), seedersList.get(i).getSeederPort());
 
 //              Create file download handler thread (Adds i + 1 since i starts from 0)
-                DownloadFileHandler downloadFileHandler = new DownloadFileHandler(view, fileName, i + 1, seedersNumber, socketForCommAsAClient);
+                DownloadFileHandler downloadFileHandler = new DownloadFileHandler(this ,view, fileName, i + 1, seedersNumber, socketForCommAsAClient, wasInterrupted);
 
 //              Thread to handle request
                 new Thread(downloadFileHandler).start();
@@ -526,19 +539,23 @@ public class Client {
 
     private class DownloadFileHandler implements Runnable {
 
+        private boolean wasInterrupted;
+        private Client client;
         private ClientView view;
         private String fileName;
         private int partOfTheFile;
         private int totalFileParts;
         private Socket socketForCommAsAClient;
+//        private int lastUsedPosition;
 
-        private DownloadFileHandler(ClientView view, String fileName, int partOfTheFile, int totalFileParts, Socket socketForCommAsAClient) {
+        private DownloadFileHandler(Client client ,ClientView view, String fileName, int partOfTheFile, int totalFileParts, Socket socketForCommAsAClient, boolean wasInterrupted) {
             this.view = view;
             this.fileName = fileName;
             this.partOfTheFile = partOfTheFile;
             this.totalFileParts = totalFileParts;
             this.socketForCommAsAClient = socketForCommAsAClient;
-
+            this.client = client;
+            this.wasInterrupted = wasInterrupted;
         }
 
         public void run() {
@@ -595,16 +612,9 @@ public class Client {
                         int extensionDotIndex = fileName.lastIndexOf('.');
 
 //                      Add copy before extension .
-//                        fileName = fileName.substring(0, extensionDotIndex) + "copy" + fileName.substring(extensionDotIndex);
                         newFileName = fileName.substring(0, extensionDotIndex) + "copy" + fileName.substring(extensionDotIndex);
 
                     }
-//                    else {
-//
-////                      Overcome final variable
-//                        newFileName = fileName;
-//
-//                    }
                 }
 
                 // Get the file name
@@ -623,10 +633,17 @@ public class Client {
 //              Gets information where to start writing into the file
                 long startingPointToWrite = inputStream.readLong();
 
+//              If downloading was interrupted and class was called once again from re-download
+//              Skip previously downloaded number of bytes
+                if (wasInterrupted) {
+                    inputStream.skipBytes(client.lastUsedPosition);
+                }
+
                 while (true) {
                     int read = 0;
                     if (inputStream != null) {
                         read = inputStream.read(buf);
+                        client.lastUsedPosition = read;
                     }
                     passedlen += read;
                     if (read == -1) {
@@ -644,6 +661,7 @@ public class Client {
                     if (startingPointToWrite != 0) {
                         fi.seek(startingPointToWrite);
                     }
+//                  Skips lastly loaded bites number
                     fi.write(buf,0,read);
 
 
@@ -686,6 +704,33 @@ public class Client {
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
+
+
+//                  Asks if restart download
+                    Object[] options = {"Yes",
+                            "No"};
+                    int n = JOptionPane.showOptionDialog(view.getFrame(),
+                            "Downloading was interrupted \n" +
+                                    "Would you like to try again ?",
+                            "Downloading exception",
+                            JOptionPane.YES_NO_CANCEL_OPTION,
+                            JOptionPane.QUESTION_MESSAGE,
+                            null,
+                            options,
+                            options[0]);
+
+//                  If clicked yes
+                    if (n == 0) {
+
+//                      Call downloading once again with previous data
+                        askSeedersForFileToDownload(client.lastUsedView,
+                            client.lastUsedFileName,
+                                client.lastUsedCheckSum,
+                                client.lastUsedSeedersList,
+                         true);
+
+                    }
+
                 }
             }
         }
