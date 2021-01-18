@@ -1,6 +1,6 @@
 # TORrent
 
-###About
+### About
 Application with a graphic interface to share and send files between hosts.  
 Implement features like:  
 - Downloading file from the host
@@ -9,7 +9,7 @@ Implement features like:
 - Sending file to many hosts
 - Download file progress bar
 
-###Run
+### Run
 To run app, you can either run jars or compile the program yourself from the source file
 
 Application is based on TCP connection.  
@@ -28,7 +28,7 @@ starts thread to listen for requests of any other client,
 loads up all files that are within its folder, 
 asks other clients for files which may be downloaded.
 
-###App usage
+### App usage
 After starting tracker there should appear the frame indicating that tracker works correctly:  
 ![Tracker frame png](Images/trackerFrame.png)  
   
