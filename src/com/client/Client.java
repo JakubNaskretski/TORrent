@@ -121,7 +121,6 @@ public class Client {
 
 //      Creates directory to store files
         this.hostingFilesFolder = "D:\\TORrent_"+currentAppNumber+"\\";
-//        this.hostingFilesFolder = "C:\\Users\\jnaskretski\\Desktop\\TORrent\\"+currentAppNumber+"\\";
 
 //      Starts listening for other seeders
             new Thread(() -> {
