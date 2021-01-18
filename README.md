@@ -8,6 +8,7 @@ Implement features like:
 - Sending file to the host
 - Sending file to many hosts
 - Download file progress bar
+- Restarting download if was interrupted
 
 ## Run
 To run app, you can either run jars or compile the program yourself from the source file
