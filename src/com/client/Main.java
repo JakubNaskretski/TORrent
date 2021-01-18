@@ -98,7 +98,7 @@ public class Main {
                                 chooser.getSelectedFile().getAbsolutePath(),
 //                              Get chosen file name
                                 chooser.getSelectedFile().getName(),
-//                              Get copy of seeders model which are currently beeing clicked
+//                              Get copy of seeders model which are currently being clicked
                                 clientView.getListOfSeedersForDownload()
                         );
                     }

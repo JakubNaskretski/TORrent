@@ -694,67 +694,107 @@ public class Client {
 //  Sends file to particular seeder
     public void sendFileToSeeder(String pathToFileWName ,String fileName, ArrayList<SeederModel> seedersList) {
 
-        BufferedReader reader = null;
-        BufferedWriter writer = null;
-
         try {
 
-            reader = new BufferedReader(new InputStreamReader(socketForCommAsAClient.getInputStream(), "UTF8"));
+//          How many seeders clicked
+            int seedersNumber = seedersList.size();
 
-            writer = new BufferedWriter(new OutputStreamWriter(socketForCommAsAClient.getOutputStream(), "UTF8"));
+//      For each seeder run new thread
+            for (int i = 0; i < seedersNumber; i++) {
 
-            File fi = new File(pathToFileWName);
+//              Creates socket to connect with seeder
+                Socket socketForCommAsAClient = new Socket(seedersList.get(i).getSeederIp(), seedersList.get(i).getSeederPort());
 
-            DataInputStream fis = new DataInputStream(new FileInputStream(pathToFileWName));
-            DataOutputStream ps = new DataOutputStream(socketForCommAsAClient.getOutputStream());
+//              Create file download handler thread (Adds i + 1 since i starts from 0)
+                SendFileHandler sendFileHandler = new SendFileHandler(pathToFileWName, fileName, socketForCommAsAClient);
+
+//              Thread to handle request
+                new Thread(sendFileHandler).start();
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private class SendFileHandler implements Runnable {
+
+        private String pathToFileWName, fileName;
+        private Socket socketForCommAsAClient;
+
+        private SendFileHandler(String pathToFileWName, String fileName, Socket socketForCommAsAClient) {
+
+            this.pathToFileWName = pathToFileWName;
+            this.fileName = fileName;
+            this.socketForCommAsAClient = socketForCommAsAClient;
+
+        }
+
+        public void run() {
+
+            BufferedReader reader = null;
+            BufferedWriter writer = null;
+
+            try {
+
+                reader = new BufferedReader(new InputStreamReader(socketForCommAsAClient.getInputStream(), "UTF8"));
+
+                writer = new BufferedWriter(new OutputStreamWriter(socketForCommAsAClient.getOutputStream(), "UTF8"));
+
+                File fi = new File(pathToFileWName);
+
+                DataInputStream fis = new DataInputStream(new FileInputStream(pathToFileWName));
+                DataOutputStream ps = new DataOutputStream(socketForCommAsAClient.getOutputStream());
 
 //          Sends request to the other seeder
-            writer.append("DOWNLOAD");
-            writer.append("\n");
-            writer.flush();
+                writer.append("DOWNLOAD");
+                writer.append("\n");
+                writer.flush();
 
 
 //          Sending file name to the other seeder
-            writer.append(fileName);
-            writer.append("\n");
-            writer.flush();
+                writer.append(fileName);
+                writer.append("\n");
+                writer.flush();
 
 //          Sending file size
-            ps.writeLong((long) fi.length());
-            ps.flush();
+                ps.writeLong((long) fi.length());
+                ps.flush();
 
-            int bufferSize = 8192;
-            byte[] buf = new byte[bufferSize];
+                int bufferSize = 8192;
+                byte[] buf = new byte[bufferSize];
 
-            while (true) {
-                int read = 0;
-                if (fis != null) {
-                    read = fis.read(buf);
-                }
+                while (true) {
+                    int read = 0;
+                    if (fis != null) {
+                        read = fis.read(buf);
+                    }
 
-                if (read == -1) {
-                    break;
+                    if (read == -1) {
+                        break;
+                    }
+                    ps.write(buf, 0, read);
                 }
-                ps.write(buf, 0, read);
-            }
-            ps.flush();
-            fis.close();
-            ps.close();
+                ps.flush();
+                fis.close();
+                ps.close();
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (writer != null) {
-                    writer.close();
-                }
-                if (reader != null) {
-//                    System.out.println("Closing connection on app: "+currentAppNumber+" for another seeder");
-                    reader.close();
-                    socketForCommAsAClient.close();
-                }
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                try {
+                    if (writer != null) {
+                        writer.close();
+                    }
+                    if (reader != null) {
+//                    System.out.println("Closing connection on app: "+currentAppNumber+" for another seeder");
+                        reader.close();
+                        socketForCommAsAClient.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -894,7 +934,7 @@ public class Client {
                         if (read == -1) {
                             break;
                         }
-                        // The following progress bar is made for the prograssBar of the graphical interface. If you are typing a file, you may repeat the same percentage.
+
                         System.out.println("File Received" + (passedlen * 100 / len)
                                 + "%\n");
                         fileOut.write(buf, 0, read);
