@@ -21,17 +21,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Client {
 
-//    TODO: If no host currently online inform about no seeders
-
-//    Wymiana list udostępnianych plików między hostami -  chcemy wiedzieć gdzie (na jakim hoście) jakie pliki się znajdują, wraz z ich sumami kontrolnymi MD5 – wersje (H2H, MH, TCP) (1 pkt.).
-//    Przesyłanie plików typu PULL – ściągamy z wybranego hosta plik o zadanej nazwie - wersje (H2H, MH, TCP) (2 pkt.).
-//    Przesyłanie plików typu PUSH – wrzucamy na wybrany host pliku o zadanej nazwie – wersje (H2H, MH, TCP) (1 pkt.).
-//    Wznawianie transmisji pliku w przypadku jej przerwania lub rozłączenia – wersje (H2H, MH, TCP) (2 pkt.).
-//    Ściąganie tego samego pliku (ale różnych jego części) z wielu hostów jednocześnie – wersja (MH, TCP) (2 pkt).
-//    Dodatkowo aplikacja powinna pracować również pod nadzorem protokołu UDP (3 pkt.). ten punkt robimy jak poprzednie są zrobione - to są punkty bonusowe.
-//    Pomiar czasu pozostałego do końca przesyłania plik (1 pkt.). ten punkt robimy jak poprzednie są zrobione  to są punkty bonusowe.
-
-
 //  Default app number
     private int currentAppNumber;
 
