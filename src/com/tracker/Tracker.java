@@ -32,7 +32,7 @@ static ReentrantLock counterLock = new ReentrantLock(true);
                 trackerView.getIpLabel().setText("Ip: "+serverSocket.getInetAddress().getHostAddress());
                 trackerView.getPortLabel().setText("Port: "+port);
 
-//          Run infinite loop for getting client request
+//              Run infinite loop for getting client request
                 while (true) {
 
 //              Accept socket

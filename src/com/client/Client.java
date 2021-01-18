@@ -479,30 +479,35 @@ public class Client {
 
         try {
 
+            boolean isFileOnBothHosts = true;
+
 //          How many seeders clicked
             int seedersNumber = seedersList.size();
 
 //          Checks if the same file is on selected seeders
             for (SeederModel seeder : seedersList) {
-                if (!seeder.getFilesMap().containsKey(fileName) || !seeder.getFilesMap().containsValue(fileCheckSum)) {
 
-                    JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
-                            "Cannot download file mutually from chosen seeders. \nNot all of them have file",
-                            "File not on all seeders",
-                            JOptionPane.ERROR_MESSAGE);
+//              If seeder files contains file
+                if (seeder.getFilesMap().containsKey(fileName)) {
 
+//                  Get value which is in map under file name
+//                  If this valuer is different than the hash, files are different and cannot be downloaded
+                    if (!seeder.getFilesMap().get(fileName).equals(fileCheckSum)) {
+
+                        JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
+                                "Cannot download file mutually from chosen seeders. \nNot all of them have file",
+                                "File not on all seeders",
+                                JOptionPane.ERROR_MESSAGE);
+
+                        return;
+                    }
+                } else if (!seeder.getFilesMap().containsKey(fileName)) {
                     return;
                 }
             }
 
 //      For each seeder run new thread
             for (int i = 0; i < seedersNumber; i++) {
-
-////          Gets ip of i clicked host in the list
-//            String hostIp = seedersList.get(seedersNumber).getSeederIp();
-//
-////          Gets ip of i clicked host in the list
-//            int hostPort = seedersList.get(seedersNumber).getSeederPort();
 
 //              Creates socket to connect with seeder
                 Socket socketForCommAsAClient = new Socket(seedersList.get(i).getSeederIp(), seedersList.get(i).getSeederPort());
@@ -541,7 +546,7 @@ public class Client {
             try {
 
 //              Creates variable to add file name
-                String newFileName = null;
+                String newFileName = fileName;
 
 //              Creates output stream buffer for writing data to seeder
                 outputStream = socketForCommAsAClient.getOutputStream();
@@ -593,23 +598,30 @@ public class Client {
 //                        fileName = fileName.substring(0, extensionDotIndex) + "copy" + fileName.substring(extensionDotIndex);
                         newFileName = fileName.substring(0, extensionDotIndex) + "copy" + fileName.substring(extensionDotIndex);
 
-                    } else {
-
-//                      Overcome final variable
-                        newFileName = fileName;
-
                     }
+//                    else {
+//
+////                      Overcome final variable
+//                        newFileName = fileName;
+//
+//                    }
                 }
 
                 // Get the file name
                 String file = hostingFilesFolder + newFileName;
 
-//              TODO: Take care of delivery file in diffrenet order
-                DataOutputStream fileOut = new DataOutputStream(
-                        new BufferedOutputStream(new FileOutputStream(file, true)));
+//              File fi = new File(hostingFilesFolder + fileName);
+                RandomAccessFile fi = new RandomAccessFile(file, "rws");
+
+//                DataOutputStream fileOut = new DataOutputStream(
+//                        new BufferedOutputStream(new FileOutputStream(file, true)));
+
 
 //              Gets information about file length
                 len = inputStream.readLong();
+
+//              Gets information where to start writing into the file
+                long startingPointToWrite = inputStream.readLong();
 
                 while (true) {
                     int read = 0;
@@ -621,29 +633,30 @@ public class Client {
                         break;
                     }
 
-                    System.out.println("Downloaded " + (passedlen / len) * 100 + "% of file");
-
-
 //                  File progress bar
                     view.changeDownloadFileLabel("Downloaded " + (passedlen / len) * 100 + "% of file");
 
-//                    wait(1);
+                    System.out.println("File part - "+partOfTheFile+" - "+new String(buf, StandardCharsets.UTF_8));
 
 
-                    System.out.println("File part "+partOfTheFile+new String(buf, StandardCharsets.UTF_8));
+//                    fileOut.write(buf, 0, read);
 
-
-                    fileOut.write(buf, 0, read);
+                    if (startingPointToWrite != 0) {
+                        fi.seek(startingPointToWrite);
+                    }
+                    fi.write(buf,0,read);
 
 
                 }
 
-                view.createPopUpWindow("File successfully downloaded");
+//              Creates popup after successful download
+                view.createPopUpWindow("File successfully downloaded "+partOfTheFile+" out of "+totalFileParts);
                 System.out.println("Receive completed, file saved as" + file + "\n");
 
                 view.changeDownloadFileLabel("% of downloaded file");
 
-                fileOut.close();
+//                fileOut.close();
+                fi.close();
 
 //              Refresh file list to download from app
                 loadFilesToShare();
@@ -686,9 +699,6 @@ public class Client {
 
         try {
 
-//          Creates socket to connect with seeder
-//            this.socketForCommAsAClient = new Socket(host, Integer.valueOf(port));
-
             reader = new BufferedReader(new InputStreamReader(socketForCommAsAClient.getInputStream(), "UTF8"));
 
             writer = new BufferedWriter(new OutputStreamWriter(socketForCommAsAClient.getOutputStream(), "UTF8"));
@@ -728,8 +738,6 @@ public class Client {
                 ps.write(buf, 0, read);
             }
             ps.flush();
-            // Note that the socket link is closed, otherwise the client will wait for the server data to come over.
-            // Until the socket times out, the data is incomplete.
             fis.close();
             ps.close();
 
@@ -758,8 +766,6 @@ public class Client {
         try {
 //      Run infinite loop for getting other seeders requests
         while (true) {
-
-//            System.out.println("Started listening on app: "+currentAppNumber+" for seeders requests");
 
 //          Accept socket
             Socket anotherSeeder = currentAppHostingSocket.accept();
@@ -855,15 +861,20 @@ public class Client {
 //                  Get name of the receiving file
                     fileName = reader.readLine();
 
+
+                    while (true) {
 //                  Iterate over files already in app folder
-                    for (File file : hostAppFiles.keySet()) {
+                        for (File file : hostAppFiles.keySet()) {
 //                      If app already contains file with same name
-                        if (file.getName().equals(fileName)) {
+                            if (file.getName().equals(fileName)) {
 //                          Find index of . before downloading file extension
-                            int extensionDotIndex = fileName.lastIndexOf('.');
+                                int extensionDotIndex = fileName.lastIndexOf('.');
 //                          Add -copy before extension .
-                            fileName = fileName.substring(0, extensionDotIndex) + "-copy" + fileName.substring(extensionDotIndex);
+                                fileName = fileName.substring(0, extensionDotIndex) + "-copy" + fileName.substring(extensionDotIndex);
+                            loadFilesToShare();
+                            }
                         }
+                        break;
                     }
 
 //                  Creating file
@@ -905,7 +916,7 @@ public class Client {
 //                  Get name of the file to send
                     fileName = reader.readLine();
 
-//                    File fi = new File(hostingFilesFolder + fileName);
+//                  File fi = new File(hostingFilesFolder + fileName);
                     RandomAccessFile fi = new RandomAccessFile(hostingFilesFolder + fileName, "r");
 
 //                  Read how many parts of the file should be
@@ -914,88 +925,33 @@ public class Client {
 //                  Read which part of the file is needed
                     filePart = Integer.parseInt(reader.readLine());
 
-
-//                    RandomAccessFile sourceFile = new RandomAccessFile(hostingFilesFolder + fileName, "r");
-//                    FileChannel sourceChannel = sourceFile.getChannel();
-//                    sourceChannel.position(Integer.valueOf(filePart));
-//
-//                    RandomAccessFile toFile = new RandomAccessFile(Path tempName, "rw");
-//                    FileChannel      toChannel = toFile.getChannel();
-//
-//                    toChannel.transferFrom(sourceChannel, 0, bytesPerSplit);
-
-
-//                    SocketChannel clientChannel= client;
-//                    File fileToSend=new File(hostingFilesFolder + fileName);
-//                    String filename=fileToSend.getName();
-//                    byte[] nameBytes=filename.getBytes("UTF-8");
-//                    ByteBuffer nameBuffer=ByteBuffer.wrap(nameBytes);
-//                    clientChannel.write(nameBuffer);
-//
-//                    byte[] splitedFilePart = (nameBytes / Integer.parseInt(howManyFileParts));
-//
-//
-//                    FileChannel sbc=FileChannel.open(fileToSend.toPath());
-//                    ByteBuffer buff=ByteBuffer.allocate(10000000);
-//
-//                    int bytesread=sbc.read(buff);
-//
-//                    while(bytesread != -1){
-//                        buff.flip();
-//                        clientChannel.write(buff);
-//                        buff.compact();
-//                        bytesread=sbc.read(buff);
-//                    }
-//                    long numSplits = 10; //from user input, extract it from args
-
-
+//                  Creates data output stream for sending file
                     DataOutputStream ps = new DataOutputStream(client.getOutputStream());
 
+//                  Get total length of the file
                     long sourceSize = fi.length();
+//                  Divide total length of the file into how many file parts should be
                     long sizeOfFilePart = sourceSize / howManyFileParts;
-//                    long filePositionToStart = sourceSize - sizeOfFilePart;
-                    long startingPointToRead = sourceSize - (sizeOfFilePart * filePart);
-                    long endingPointToRead = startingPointToRead + sizeOfFilePart;
+//                  Find ending point to which file should be read
+                    long endingPointToRead = sizeOfFilePart * filePart;
+//                  Find starting point from which file should be read
+                    long startingPointToRead = endingPointToRead - sizeOfFilePart;
 
+//                  Send to the client how much data (size of total file part) will be send
                     ps.writeLong(sizeOfFilePart);
-//                         ps.writeLong((long) fi.length());
                     ps.flush();
 
-//                         buf = new byte[bufferSize];
+//                  Send to the client where it shold start writing into the file
+                    ps.writeLong(startingPointToRead);
+                    ps.flush();
 
-//                         DataInputStream fis = new DataInputStream(new FileInputStream(hostingFilesFolder + fileName));
-
-
-//
-
-//
-//                    try (RandomAccessFile fileChannelReader = new RandomAccessFile(hostingFilesFolder + fileName, "r");
-//                         FileChannel channel = fileChannelReader.getChannel();
-//
-//                         ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-//
-//                        if (bufferSize > channel.size()) {
-//                            bufferSize = (int) channel.size();
-//                        }
-//                        ByteBuffer buff = ByteBuffer.allocate(bufferSize);
-//
-////                        int bufferSize = 1024;
-////                        if (bufferSize > channel.size()) {
-////                            bufferSize = (int) channel.size();
-////                        }
-////                        ByteBuffer buff = ByteBuffer.allocate(bufferSize);
-//
-//                        while (channel.read(buff, startingPointToRead, partOfFileSize) > 0) {
-//                            out.write(buff.array(), 0, buff.position());
-//                            buff.clear();
-//                        }
-
-
+//                  Set position of the file reading
                     long position = 0;
 
+//                  Jump in file to the correct starting position
                     fi.seek(startingPointToRead);
 
-
+//                  While position is not end of the part
                     while (position < endingPointToRead) {
 
                         int read = 0;
@@ -1008,11 +964,10 @@ public class Client {
                         ps.write(read);
                     }
                     ps.flush();
-                    System.out.println("Finished part of the file "+filePart);
                     fi.close();
 
 
-//
+//                    Solution without dividing into the parts
 //                    while (true) {
 //                        int read = 0;
 //                        if (fis != null) {
@@ -1028,6 +983,7 @@ public class Client {
 //                    // Note that the socket link is closed, otherwise the client will wait for the server data to come over.
 //                    // Until the socket times out, the data is incomplete.
 //                    fis.close();
+
                     ps.close();
                     break;
             }
